@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My FarmLend{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-green-600 p-4">
+        <h1 class="text-white text-2xl">FarmLend</h1>
+    </nav>
+
+    <div class="flex flex-col justify-center items-center h-screen">
+        <!-- ข้อความ Welcome -->
+        <h2 class="text-4xl font-bold mb-10">Welcome to FarmLend</h2>
+        
+        <!-- ปุ่ม Login และ Register ในรูปแบบที่ใหญ่ขึ้น -->
+        <div class="bg-green-500 p-12 rounded-full">
+            <!-- ปุ่ม Login -->
+            <div class="mb-6">
+                <a href="{% url 'login' %}" class="bg-green-100 text-black text-xl px-8 py-4 rounded-full shadow-lg hover:bg-green-200 block text-center">
+                    Log in
+                </a>
+            </div>
+            <!-- ปุ่ม Register -->
+            <div>
+                <a href="{% url 'register' %}" class="bg-green-100 text-black text-xl px-8 py-4 rounded-full shadow-lg hover:bg-green-200 block text-center">
+                    Register
+                </a>
+            </div>
+        </div>
+    </div>
+
+</body>
+<footer class="bg-gray-800 text-white text-center py-4">
+    <p>FarmLend © 2024</p>
+</footer>
+</html>

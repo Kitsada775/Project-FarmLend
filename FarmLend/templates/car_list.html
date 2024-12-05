@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Car List{% endblock %}
+
+{% block content %}
+<h2 class="text-3xl font-bold mb-6 text-center">รายการ {{ car_type.name }}</h2>
+
+<!-- Container สำหรับการแสดง grid -->
+<div class="container mx-auto px-4">
+
+    <a href="/addcar/{{ car_type.id }}" class="p-5 text-xl1">เพิ่มรายการรถ</a>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {% for car in cars %}
+        <div class="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center">
+            <!-- Placeholder สำหรับรูปภาพ -->
+             {% if car.image %}
+            <img src="{{ car.image.url }}" class="w-40 h-full object-cover rounded-lg mb-4">
+            {% else %}
+            <div class="w-40 h-40 bg-slate-500 rounded-lg mb-4"></div>
+
+            {% endif %}
+
+            <!-- ชื่อรถ -->
+            <h3 class="text-lg font-bold">{{ car.name }}</h3>
+
+            <!-- รายละเอียดรถ -->
+            <p class="text-sm text-gray-600">{{ car.description }}</p>
+
+            <!-- ปุ่มเลือก -->
+            <a href="{% url 'car_detail' car.id %}" class="mt-4 bg-black text-white py-2 px-6 rounded-full hover:bg-gray-800">
+                เลือก
+            </a>
+
+            <a href="/edicar/{{ car.id }}/{{ car_type.id }}" class="p-2">แก้ไข</a>
+            <a href="/delcar/{{ car.id }}/{{ car_type.id }}" class="p-2">ลบ</a>
+
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

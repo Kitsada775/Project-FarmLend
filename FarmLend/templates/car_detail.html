@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Car Detail{% endblock %}
+
+{% block content %}
+<div class="bg-white p-6 rounded-lg shadow-md">
+    {% if car.image %}
+        <img src="{{ car.image.url }}" alt="{{ car.name }}" class="w-full h-64 object-cover rounded">
+    {% endif %}
+    <h2 class="text-3xl font-bold mt-6">{{ car.name }}</h2>
+    <p class="mt-4">{{ car.description }}</p>
+    <p class="mt-2"><strong>แรงม้า:</strong> {{ car.horsepower }} แรงม้า</p>
+</div>
+<a href="{% url 'car_list_by_type' car.car_type.id %}" class="mt-6 block bg-gray-600 text-white py-2 text-center rounded">Back to Car List</a>
+{% endblock %}

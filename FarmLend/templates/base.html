@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My FarmLend{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-green-600 p-4">
+        <h1 class="text-white text-2xl">FarmLend</h1>
+    </nav>
+
+        {% block content %}
+        {% endblock %}
+
+
+</body>
+<footer class="bg-gray-800 text-white text-center py-4">
+    <p>FarmLend © 2024</p>
+</footer>
+</html>
+

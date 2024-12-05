@@ -1,0 +1,11 @@
+<form action="" method="post" enctype="multipart/form-data" class="max-w-lg mx-auto bg-white p-8 rounded-lg shadow-md">
+    {% csrf_token %}
+    <div class="mb-6">
+        {{ form.as_p }}
+    </div>
+    <div class="flex justify-center">
+        <button type="submit" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+            บันทึก
+        </button>
+    </div>
+</form>
