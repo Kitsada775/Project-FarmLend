@@ -1,11 +1,26 @@
-<form action="" method="post" enctype="multipart/form-data" class="max-w-lg mx-auto bg-white p-8 rounded-lg shadow-md">
-    {% csrf_token %}
-    <div class="mb-6">
-        {{ form.as_p }}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เพิ่มรถ</title>
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+</head>
+<body>
+    <div class="container mx-auto mt-10">
+        <h2 class="text-2xl font-bold mb-4">เพิ่มรถใหม่</h2>
+        <form method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-lg shadow-lg">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
+                บันทึก
+            </button>
+            <!-- ปุ่มกลับ -->
+            <a href="{% url 'car_list_by_type' type %}" class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
+                กลับ
+            </a>
+        </form>
     </div>
-    <div class="flex justify-center">
-        <button type="submit" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
-            บันทึก
-        </button>
-    </div>
-</form>
+</body>
+</html>

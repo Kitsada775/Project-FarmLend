@@ -3,38 +3,57 @@
 {% block title %}Car List{% endblock %}
 
 {% block content %}
-<h2 class="text-3xl font-bold mb-6 text-center">รายการ {{ car_type.name }}</h2>
+
+    <!-- ปุ่มเพิ่มรายการรถ -->
+    <a href="/addcar/{{ car_type.id }}" class="absolute top-20 right-2 bg-blue-500 text-white py-2 px-5 rounded-lg hover:bg-blue-600 transition-colors duration-300">
+        เพิ่มรายการรถ
+    </a>
+
+    <a href="{% url 'car_type_list' %}" class="absolute top-20 left-2 bg-gray-500 text-white py-2 px-5 rounded-lg shadow-lg hover:bg-gray-600 transition-colors duration-300">
+       กลับ
+    </a>
+
+<h2 class="text-4xl font-bold mb-8 text-center text-gray-800 mt-12">รายการ {{ car_type.name }}</h2>
 
 <!-- Container สำหรับการแสดง grid -->
-<div class="container mx-auto px-4">
+<div class="relative container mx-auto px-4 mt-10 mb-20">  <!-- เพิ่ม mt-16 เพื่อเพิ่มระยะห่างด้านบน -->
 
-    <a href="/addcar/{{ car_type.id }}" class="p-5 text-xl1">เพิ่มรายการรถ</a>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-16"> <!-- เพิ่ม mt-16 ที่ grid -->
         {% for car in cars %}
-        <div class="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center">
+        <div class="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center hover:shadow-xl transition-shadow duration-300 transform hover:scale-105">
             <!-- Placeholder สำหรับรูปภาพ -->
-             {% if car.image %}
-            <img src="{{ car.image.url }}" class="w-40 h-full object-cover rounded-lg mb-4">
+            {% if car.image %}
+            <img src="{{ car.image.url }}" class="w-40 h-40 object-cover rounded-lg mb-4">
             {% else %}
             <div class="w-40 h-40 bg-slate-500 rounded-lg mb-4"></div>
-
             {% endif %}
 
             <!-- ชื่อรถ -->
-            <h3 class="text-lg font-bold">{{ car.name }}</h3>
+            <h3 class="text-lg font-bold mb-4 text-center">{{ car.name }}</h3>
 
             <!-- รายละเอียดรถ -->
-            <p class="text-sm text-gray-600">{{ car.description }}</p>
+            <p class="text-sm text-gray-600 mb-4">{{ car.description }}</p>
 
-            <!-- ปุ่มเลือก -->
-            <a href="{% url 'car_detail' car.id %}" class="mt-4 bg-black text-white py-2 px-6 rounded-full hover:bg-gray-800">
-                เลือก
-            </a>
-
-            <a href="/edicar/{{ car.id }}/{{ car_type.id }}" class="p-2">แก้ไข</a>
-            <a href="/delcar/{{ car.id }}/{{ car_type.id }}" class="p-2">ลบ</a>
-
+            <div class="flex justify-between gap-4">
+                <!-- ปุ่มดูตารางงาน -->
+                <a href="{% url 'car_schedule' car.id %}" class="bg-blue-500 text-white py-2 px-6 rounded-full hover:bg-blue-600 transition-colors duration-300">
+                    ดูตารางงาน
+                </a>
+                
+                <!-- ปุ่มเลือก -->
+                <a href="{% url 'car_detail' car.id %}" class="bg-green-500 text-white py-2 px-6 rounded-full hover:bg-green-600 transition-colors duration-300">
+                    เลือก
+                </a>
+            
+            </div>
+            
+            <!-- ปุ่มแก้ไข และลบ -->
+            <div class="flex gap-4 mt-4">
+                <a href="/edicar/{{ car.id }}/{{ car_type.id }}" class="text-blue-500 hover:underline">แก้ไข</a>
+                <a href="/delcar/{{ car.id }}/{{ car_type.id }}" class="text-red-500 hover:underline">ลบ</a>
+            </div>
         </div>
         {% endfor %}
     </div>

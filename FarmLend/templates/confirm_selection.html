@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}ยืนยันการเลือก{% endblock %}
+
+{% block content %}
+<div class="container mx-auto mt-20">
+    <div class="bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto text-center">
+        <h2 class="text-2xl font-bold mb-6">ยืนยันการเลือก</h2>
+        <p class="text-gray-800 mb-4">วันที่ที่คุณเลือก: <strong>{{ date }}</strong></p>
+        <p class="text-gray-800 mb-6">ช่วงเวลาที่คุณเลือก: <strong>{{ time }}</strong></p>
+        <div class="flex justify-center gap-4">
+            <a href="/" class="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600">ยืนยัน</a>
+            <a href="#" onclick="history.back()" class="bg-gray-500 text-white py-2 px-6 rounded-lg hover:bg-gray-600">ยกเลิก</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

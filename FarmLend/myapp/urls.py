@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 
+
 urlpatterns = [
     path('', views.welcome_view, name='welcome'),  # หน้าแรก
     path('login/', views.login_view, name='login'),  # หน้าล็อกอิน
@@ -18,4 +19,8 @@ urlpatterns = [
     path('edicar/<int:id>/<str:type>/',views.edicar,name='edicar'),
     path('delcar/<int:id>/<str:type>/',views.delcar,name='delcar'),
 
+    path('confirm_selection/<str:time>/', views.confirm_selection, name='confirm_selection'),
+    path('car/schedule/<int:car_id>/', views.car_schedule, name='car_schedule'),
+
+    path('confirm_selection/', views.confirm_selection, name='confirm_selection'),
 ]

@@ -1,15 +1,239 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block title %}Car Detail{% endblock %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Detail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* สไตล์พื้นฐานสำหรับ body และ container */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
 
-{% block content %}
-<div class="bg-white p-6 rounded-lg shadow-md">
-    {% if car.image %}
-        <img src="{{ car.image.url }}" alt="{{ car.name }}" class="w-full h-64 object-cover rounded">
-    {% endif %}
-    <h2 class="text-3xl font-bold mt-6">{{ car.name }}</h2>
-    <p class="mt-4">{{ car.description }}</p>
-    <p class="mt-2"><strong>แรงม้า:</strong> {{ car.horsepower }} แรงม้า</p>
+        .container {
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .car-image {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin: 20px auto;
+            border-radius: 8px;
+        }
+
+        .description {
+            font-size: 1.1rem;
+            line-height: 1.5;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .button-container {
+            margin-top: 20px;
+        }
+
+        /* ปุ่มหลัก */
+        .main-button {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .main-button:hover {
+            background-color: #0056b3;
+        }
+
+        /* ปุ่มย้อนกลับ */
+        .btn-secondary {
+            display: inline-block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px;
+            text-align: center;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        /* Modal */
+        .modal {
+            display: none; /* ซ่อน modal เริ่มต้น */
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5); /* ทำให้พื้นหลังมืด */
+            padding-top: 60px;
+            text-align: center; /* ให้อยู่ตรงกลาง */
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 8px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* ปุ่มภายใน Modal */
+        .hidden-buttons button {
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .hidden-buttons button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>{{ car.name }}</h1>
+        <img src="{{ car.image.url }}" alt="{{ car.name }}" class="car-image">
+        <p class="description">{{ car.description }}</p>
+        <p>แรงม้า: {{ car.horsepower }} แรงม้า</p>
+
+        <!-- ปุ่มหลัก -->
+        <div class="button-container">
+            <button class="main-button" onclick="openModal()">เลือกช่วงเวลา</button>
+        </div>
+
+<!-- Modal -->
+<div id="myModal" class="modal">
+    <div class="modal-content p-6 bg-white rounded-lg shadow-lg">
+        <span class="close cursor-pointer text-gray-500 hover:text-gray-800" onclick="closeModal()">&times;</span>
+        <h2 class="text-xl font-semibold mb-4 text-center">เลือกวันที่และช่วงเวลา</h2>
+
+        <!-- Date Picker -->
+        <div class="mb-4">
+            <label for="date" class="block text-sm font-medium text-gray-700">เลือกวันที่</label>
+            <input type="date" id="date" name="date" class="mt-1 block w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+        </div>
+
+        <!-- ปุ่มเลือกช่วงเวลา -->
+        <div class="flex justify-around mt-4">
+            <button id="morningBtn" class="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300">
+                ช่วงเช้า
+            </button>
+            <button id="afternoonBtn" class="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300">
+                ช่วงบ่าย
+            </button>
+        </div>
+    </div>
 </div>
-<a href="{% url 'car_list_by_type' car.car_type.id %}" class="mt-6 block bg-gray-600 text-white py-2 text-center rounded">Back to Car List</a>
-{% endblock %}
+
+<script>
+    // ฟังก์ชันปิด Modal
+    function closeModal() {
+        document.getElementById('myModal').style.display = 'none';
+    }
+
+    // การเพิ่ม Event Listener ให้ปุ่มเลือกช่วงเวลา
+    document.getElementById('morningBtn').addEventListener('click', function () {
+        handleTimeSelection('morning');
+    });
+    document.getElementById('afternoonBtn').addEventListener('click', function () {
+        handleTimeSelection('afternoon');
+    });
+
+    // ฟังก์ชันจัดการการส่งค่า
+    function handleTimeSelection(time) {
+        const selectedDate = document.getElementById('date').value;
+
+        if (!selectedDate) {
+            alert('กรุณาเลือกวันที่ก่อน');
+            return;
+        }
+
+        // ส่งค่าผ่าน URL
+        window.location.href = `/confirm_selection/?date=${selectedDate}&time=${time}`;
+    }
+</script>
+
+
+        <!-- ปุ่มย้อนกลับ -->
+        <a href="{% url 'car_list_by_type' car.car_type.id %}" class="btn-secondary">Back to Car List</a>
+    </div>
+
+    <script>
+        // ฟังก์ชันเปิด Modal
+        function openModal() {
+            document.getElementById("myModal").style.display = "block"; // แสดง Modal
+        }
+
+        // ฟังก์ชันปิด Modal
+        function closeModal() {
+            document.getElementById("myModal").style.display = "none"; // ซ่อน Modal
+        }
+
+        // เมื่อคลิกนอก Modal ก็ปิดมัน
+        window.onclick = function (event) {
+            if (event.target == document.getElementById("myModal")) {
+                closeModal();
+            }
+        }
+        
+    </script>
+</body>
+
+</html>
+
+
+
