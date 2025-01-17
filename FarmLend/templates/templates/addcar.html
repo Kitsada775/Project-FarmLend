@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}เพิ่มรถใหม่{% endblock %}
+
+{% block content %}
+<div class="container mx-auto mt-10">
+    <h2 class="text-3xl font-bold mb-6">เพิ่มรถใหม่ในหมวดหมู่ {{ car_type.name }}</h2>
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">บันทึก</button>
+        <a href="{% url 'car_list_by_type' type_id=car_type.id %}" class="text-gray-500 hover:underline ml-4">ยกเลิก</a>
+    </form>
+</div>
+{% endblock %}

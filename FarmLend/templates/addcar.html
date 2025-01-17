@@ -1,26 +1,16 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เพิ่มรถ</title>
-    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
-</head>
-<body>
-    <div class="container mx-auto mt-10">
-        <h2 class="text-2xl font-bold mb-4">เพิ่มรถใหม่</h2>
-        <form method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-lg shadow-lg">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
-                บันทึก
-            </button>
-            <!-- ปุ่มกลับ -->
-            <a href="{% url 'car_list_by_type' type %}" class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
-                กลับ
-            </a>
-        </form>
-    </div>
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block title %}เพิ่มรถใหม่{% endblock %}
+
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">เพิ่มรถใหม่</h2>
+
+<form action="{% url 'addcar' type_id=car_type.id %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">บันทึก</button>
+</form>
+
+<a href="{% url 'car_list_by_type' type_id=car_type.id %}" class="text-gray-500">กลับ</a>
+
+{% endblock %}

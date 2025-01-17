@@ -2,4 +2,6 @@
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">บันทึก</button>
-    </form>
+</form>
+
+<a href="{% url 'car_list_by_type' type_id=car_type.id %}">ย้อนกลับ</a>

@@ -142,7 +142,6 @@
         }
     </style>
 </head>
-
 <body>
     <div class="container">
         <h1>{{ car.name }}</h1>
@@ -150,69 +149,95 @@
         <p class="description">{{ car.description }}</p>
         <p>แรงม้า: {{ car.horsepower }} แรงม้า</p>
 
+        <!-- แสดงสถานะของรถ -->
+        <p>สถานะ:
+            {% if car.is_available %}
+                <span class="text-green-500">พร้อมใช้งาน</span>
+            {% else %}
+                <span class="text-red-500">ไม่พร้อมใช้งาน</span>
+            {% endif %}
+        </p>
+
+        <!-- ข้อมูลเจ้าของรถ -->
+        <div class="owner-info">
+            <h3>ข้อมูลเจ้าของรถ</h3>
+            <p><strong>ชื่อจริง:</strong> {{ car.owner.first_name }} {{ car.owner.last_name }}</p>
+            <p><strong>ชื่อเล่น:</strong> {{ car.owner.nickname }}</p>
+            <p><strong>เบอร์โทร:</strong> {{ car.owner.phone_number }}</p>
+            <p><strong>ที่อยู่:</strong> {{ car.owner.address }}</p>
+        </div>
+
+        <!-- แสดงปุ่มสำหรับเจ้าของรถเพื่อเปลี่ยนสถานะ -->
+        {% if car.owner == request.user %}
+            <form action="{% url 'toggle_car_status' car.id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning">
+                    {% if car.is_available %}
+                        เปลี่ยนสถานะเป็นไม่พร้อมใช้งาน
+                    {% else %}
+                        เปลี่ยนสถานะเป็นพร้อมใช้งาน
+                    {% endif %}
+                </button>
+            </form>
+        {% endif %}
+        
         <!-- ปุ่มหลัก -->
         <div class="button-container">
-            <button class="main-button" onclick="openModal()">เลือกช่วงเวลา</button>
-        </div>
-
-<!-- Modal -->
-<div id="myModal" class="modal">
-    <div class="modal-content p-6 bg-white rounded-lg shadow-lg">
-        <span class="close cursor-pointer text-gray-500 hover:text-gray-800" onclick="closeModal()">&times;</span>
-        <h2 class="text-xl font-semibold mb-4 text-center">เลือกวันที่และช่วงเวลา</h2>
-
-        <!-- Date Picker -->
-        <div class="mb-4">
-            <label for="date" class="block text-sm font-medium text-gray-700">เลือกวันที่</label>
-            <input type="date" id="date" name="date" class="mt-1 block w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-        </div>
-
-        <!-- ปุ่มเลือกช่วงเวลา -->
-        <div class="flex justify-around mt-4">
-            <button id="morningBtn" class="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300">
-                ช่วงเช้า
-            </button>
-            <button id="afternoonBtn" class="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300">
-                ช่วงบ่าย
-            </button>
+            <a href="{% url 'car_list_by_type' car.car_type.id %}" class="btn-secondary">กลับไปหน้ารายการรถ</a>
+            <!-- ปุ่มเลือกช่วงเวลาแสดงเฉพาะเมื่อรถพร้อมใช้งาน -->
+            {% if car.is_available %}
+                <button class="main-button" onclick="openModal()">เลือกช่วงเวลา</button>
+            {% endif %}
         </div>
     </div>
-</div>
 
-<script>
-    // ฟังก์ชันปิด Modal
-    function closeModal() {
-        document.getElementById('myModal').style.display = 'none';
-    }
+    <!-- Modal -->
+    <div id="myModal" class="modal">
+        <div class="modal-content p-6 bg-white rounded-lg shadow-lg">
+            <span class="close cursor-pointer text-gray-500 hover:text-gray-800" onclick="closeModal()">&times;</span>
+            <h2 class="text-xl font-semibold mb-4 text-center">เลือกวันที่และช่วงเวลา</h2>
 
-    // การเพิ่ม Event Listener ให้ปุ่มเลือกช่วงเวลา
-    document.getElementById('morningBtn').addEventListener('click', function () {
-        handleTimeSelection('morning');
-    });
-    document.getElementById('afternoonBtn').addEventListener('click', function () {
-        handleTimeSelection('afternoon');
-    });
+            <!-- Date Picker -->
+            <div class="mb-4">
+                <label for="date" class="block text-sm font-medium text-gray-700">เลือกวันที่</label>
+                <input type="date" id="date" name="date" class="mt-1 block w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+            </div>
 
-    // ฟังก์ชันจัดการการส่งค่า
-    function handleTimeSelection(time) {
-        const selectedDate = document.getElementById('date').value;
-
-        if (!selectedDate) {
-            alert('กรุณาเลือกวันที่ก่อน');
-            return;
-        }
-
-        // ส่งค่าผ่าน URL
-        window.location.href = `/confirm_selection/?date=${selectedDate}&time=${time}`;
-    }
-</script>
-
-
-        <!-- ปุ่มย้อนกลับ -->
-        <a href="{% url 'car_list_by_type' car.car_type.id %}" class="btn-secondary">Back to Car List</a>
+            <!-- ปุ่มเลือกช่วงเวลา -->
+            <div class="flex justify-around mt-4">
+                <button id="morningBtn" class="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300">
+                    ช่วงเช้า
+                </button>
+                <button id="afternoonBtn" class="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300">
+                    ช่วงบ่าย
+                </button>
+            </div>
+        </div>
     </div>
 
     <script>
+        // การเพิ่ม Event Listener ให้ปุ่มเลือกช่วงเวลา
+        document.getElementById('morningBtn').addEventListener('click', function () {
+            handleTimeSelection('morning');
+        });
+        document.getElementById('afternoonBtn').addEventListener('click', function () {
+            handleTimeSelection('afternoon');
+        });
+
+        // ฟังก์ชันจัดการการส่งค่า
+        function handleTimeSelection(time) {
+            const selectedDate = document.getElementById('date').value;
+            const carId = "{{ car.id }}"; // ดึงค่า car_id จาก Django template
+
+            if (!selectedDate) {
+                alert('กรุณาเลือกวันที่ก่อน');
+                return;
+            }
+
+            // ส่งค่าผ่าน URL
+            window.location.href = `/confirm_selection/?date=${selectedDate}&time=${time}&car_id=${carId}`;
+        }
+
         // ฟังก์ชันเปิด Modal
         function openModal() {
             document.getElementById("myModal").style.display = "block"; // แสดง Modal
@@ -229,11 +254,7 @@
                 closeModal();
             }
         }
-        
     </script>
 </body>
 
 </html>
-
-
-

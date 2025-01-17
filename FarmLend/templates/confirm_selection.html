@@ -1,17 +1,32 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ยืนยันการเลือก</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+        <h2 class="text-xl font-semibold mb-4">ยืนยันการเลือก</h2>
+        <p>วันที่ที่คุณเลือก: <span class="font-bold">{{ date }}</span></p>
+        <p>ช่วงเวลาที่คุณเลือก: <span class="font-bold">{{ time }}</span></p>
 
-{% block title %}ยืนยันการเลือก{% endblock %}
+        <form method="POST" action="{% url 'confirm_selection' %}">
+            {% csrf_token %}
+            <input type="hidden" name="date" value="{{ date }}">
+            <input type="hidden" name="time" value="{{ time }}">
+            <input type="hidden" name="car_id" value="{{ car_id }}">
 
-{% block content %}
-<div class="container mx-auto mt-20">
-    <div class="bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto text-center">
-        <h2 class="text-2xl font-bold mb-6">ยืนยันการเลือก</h2>
-        <p class="text-gray-800 mb-4">วันที่ที่คุณเลือก: <strong>{{ date }}</strong></p>
-        <p class="text-gray-800 mb-6">ช่วงเวลาที่คุณเลือก: <strong>{{ time }}</strong></p>
-        <div class="flex justify-center gap-4">
-            <a href="/" class="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600">ยืนยัน</a>
-            <a href="#" onclick="history.back()" class="bg-gray-500 text-white py-2 px-6 rounded-lg hover:bg-gray-600">ยกเลิก</a>
-        </div>
+            <div class="flex justify-around mt-6">
+                <button type="button" onclick="window.history.back()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    ยกเลิก
+                </button>
+                <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    ยืนยัน
+                </button>
+            </div>
+        </form>
     </div>
-</div>
-{% endblock %}
+</body>
+</html>
