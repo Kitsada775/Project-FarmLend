@@ -1,40 +1,36 @@
+<!-- booking_schedule.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking Schedule</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>ตารางการจอง</title>
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto p-4 bg-white rounded-lg shadow-md max-w-lg">
-        <h1 class="text-2xl font-bold mb-4">ตารางการจองสำหรับรถ: {{ car.name }}</h1>
-
-        <table class="min-w-full bg-white border border-gray-300">
-            <thead>
+<body>
+    <h2>ตารางการจองสำหรับรถ: {{ car.name }}</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>วันที่</th>
+                <th>เวลา</th>
+                <th>สถานะ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for schedule in schedules %}
                 <tr>
-                    <th class="px-4 py-2 border text-left">วันที่</th>
-                    <th class="px-4 py-2 border text-left">ช่วงเวลา</th>
+                    <td>{{ schedule.date }}</td>
+                    <td>{{ schedule.time }}</td>
+                    <td>
+                        {% if schedule.is_booked %}
+                            จองแล้ว
+                        {% else %}
+                            <a href="{% url 'confirm_selection' %}?date={{ schedule.date }}&time={{ schedule.time }}&car_id={{ car.id }}">จอง</a>
+                        {% endif %}
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                {% for schedule in schedules %}
-                    <tr>
-                        <td class="px-4 py-2 border">{{ schedule.date }}</td>
-                        <td class="px-4 py-2 border">{{ schedule.time }}</td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="2" class="px-4 py-2 text-center">ยังไม่มีการจอง</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <div class="mt-6 flex justify-between">
-            <a href="{% url 'car_list_by_type' car.car_type.id %}" class="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600">กลับไปหน้ารายการรถ</a>
-            <a href="{% url 'book_time' car.id %}" class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600">จองใหม่</a>
-        </div>
-    </div>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>

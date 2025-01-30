@@ -4,26 +4,37 @@
 
 {% block content %}
 <h2 class="text-2xl font-bold text-center mt-8 mb-6">รถที่รอการอนุมัติ</h2>
+
+
 <div class="container mx-auto px-4">
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {% for car in cars %}
-        <div class="bg-white p-4 rounded-lg shadow-lg">
+        <div class="bg-white p-4 rounded-lg shadow-lg relative">
+
+            <!-- แสดงวันที่และสถานะ "NEW" ถ้าเพิ่มในวันนี้ -->
+            <p class="absolute top-2 right-2 text-sm text-gray-500">{{ car.created_at|date:"d/m/Y H:i" }}</p>
+            {% if car.created_at|date:"d/m/Y" == today|date:"d/m/Y" %}
+                <span class="absolute top-2 left-2 text-sm text-green-500 font-semibold">NEW</span>
+            {% endif %}
+
+            <p>ประเภท: {{ car.car_type.name }}</p>  <!-- แสดงประเภทของรถ -->
             <h3 class="text-lg font-semibold mb-2">{{ car.name }}</h3>
             <p>{{ car.description }}</p>
             <p>แรงม้า: {{ car.horsepower }}</p>
             <img src="{{ car.image.url }}" alt="{{ car.name }}" class="w-full h-40 object-cover rounded-lg mb-4">
-            <div class="text-center">
+
+            <div class="text-center mt-4">
                 <!-- ปุ่มอนุมัติ -->
                 <a href="{% url 'approve_car' car.id %}" 
                 class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
                 อนุมัติ
             </a>
 
+                <!-- ปุ่มลบ -->
                 <a href="{% url 'delete_car' car.id %}" 
                 class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
                  ลบ
              </a>
-             
             </div>
         </div>
         {% empty %}
@@ -32,4 +43,3 @@
     </div>
 </div>
 {% endblock %}
-

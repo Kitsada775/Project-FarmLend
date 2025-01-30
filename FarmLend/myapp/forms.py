@@ -1,6 +1,10 @@
 from django import forms
-from .models import Car
 from .models import CustomUser
+from .models import Schedule, Car 
+from .models import CarReview
+from .models import Review
+
+
 
 class CarForm(forms.ModelForm):
     class Meta:
@@ -16,3 +20,21 @@ class UserUpdateForm(forms.ModelForm):
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
+
+class ScheduleForm(forms.ModelForm):
+    date = forms.DateField(input_formats=['%Y-%m-%d'])
+    
+    class Meta:
+        model = Schedule
+        fields = ['car', 'date', 'time']
+
+
+class CarReviewForm(forms.ModelForm):
+    class Meta:
+        model = CarReview
+        fields = ['rating', 'review_text']
+
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = CarReview
+        fields = ['review_text', 'rating']

@@ -2,11 +2,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .models import *
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseForbidden
 from django.urls import reverse
 from .forms import CarForm, UserUpdateForm
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.http import JsonResponse
+from .models import Car, Notification, Schedule
+from datetime import datetime
+
 
 # ฟังก์ชันสำหรับหน้าแรก
 def welcome_view(request):
@@ -80,6 +83,11 @@ def car_type_list_view(request):
     car_types = CarType.objects.all()
     return render(request, 'car_type_list.html', {'car_types': car_types})
 
+# ฟังก์ชันแสดงรายการรถ
+def car_list_view(request):
+    cars = Car.objects.all()
+    return render(request, 'car_list.html', {'cars': cars})
+
 # ฟังก์ชันแสดงรถในแต่ละประเภท
 def car_list_by_type(request, type_id):
     """
@@ -101,94 +109,83 @@ def car_detail_view(request, car_id):
 
 # ฟังก์ชันเพิ่มรถ
 def add_car(request, type_id):
-    car_type = get_object_or_404(CarType, id=type_id)  # รับ CarType จาก type_id
+    car_type = get_object_or_404(CarType, id=type_id)  # ดึงข้อมูลประเภทของรถ
     if request.method == 'POST':
         form = CarForm(request.POST, request.FILES)
         if form.is_valid():
             car = form.save(commit=False)
-            car.car_type = car_type
-            car.status = 'Pending'  # กำหนดสถานะเริ่มต้นเป็น Pending
+            car.car_type = CarType.objects.get(id=request.POST.get('car_type'))  # ใช้ค่า car_type ที่มาจากฟอร์ม
+            car.status = 'Pending'  # ตั้งสถานะเป็น 'Pending' สำหรับการอนุมัติ
             car.save()
-            return redirect('car_list_by_type', type_id=type_id)  # กลับไปยังหน้ารายการรถตาม type
+            return redirect('car_list_by_type', type_id=car.car_type.id)  # รีไดเรกไปยังหน้ารายการรถของประเภทนั้น
     else:
         form = CarForm()
+
     return render(request, 'addcar.html', {'form': form, 'car_type': car_type})
 
+
 # ฟังก์ชันแก้ไขรถ
+from django.shortcuts import redirect
+
+@login_required
 def edicar(request, id, type_id):
-    """
-    ฟังก์ชันสำหรับแก้ไขข้อมูลรถ
-    """
-    # ดึงข้อมูลรถตาม id
     car = get_object_or_404(Car, id=id)
-    car_type = get_object_or_404(CarType, id=type_id)
+
+    # ตรวจสอบว่าเจ้าของรถหรือแอดมินหรือไม่
+    if request.user != car.owner and not request.user.is_staff:
+        return HttpResponseForbidden("คุณไม่มีสิทธิ์ในการแก้ไขรถคันนี้")
 
     if request.method == 'POST':
-        form = CarForm(request.POST, request.FILES, instance=car)
+        form = CarForm(request.POST, instance=car)
         if form.is_valid():
             form.save()
-            return redirect('car_list_by_type', type_id=type_id)
+            # หลังจากบันทึกแล้วให้กลับไปที่หน้ารายละเอียดของรถที่แก้ไข
+            return redirect('car_detail', car_id=car.id)  # เปลี่ยนไปหน้ารายละเอียดของรถที่แก้ไข
     else:
         form = CarForm(instance=car)
     
-    return render(request, 'edicar.html', {'form': form, 'car': car, 'car_type': car_type})
+    return render(request, 'edit_car.html', {'form': form, 'car': car})
+
+
 
 # ฟังก์ชันลบรถ
+@login_required
 def delcar(request, car_id, type_id):
-    """
-    ฟังก์ชันลบรถ
-    """
-    car = Car.objects.filter(id=car_id).first()
-    if not car:
-        messages.error(request, "ไม่พบรถที่คุณต้องการลบ.")
-        return redirect('car_list_by_type', type_id=type_id)
+    car = get_object_or_404(Car, id=car_id)
 
+    # ตรวจสอบว่าเจ้าของรถหรือแอดมินหรือไม่
+    if request.user != car.owner and not request.user.is_staff:
+        return HttpResponseForbidden("คุณไม่มีสิทธิ์ในการลบรถคันนี้")
+
+    # ถ้าเจ้าของหรือแอดมิน ยืนยันการลบ
     car.delete()
-    messages.success(request, f"รถ '{car.name}' ถูกลบเรียบร้อยแล้ว.")
-    return redirect('car_list_by_type', type_id=type_id)
+    return redirect('car_list')  # เปลี่ยนไปหน้าแสดงรายการรถ
 
 # ฟังก์ชันแสดงตารางงานของรถ
 def car_schedule(request, car_id):
-    """
-    แสดงตารางงานของรถ:
-    - แสดงรายการตารางที่เกี่ยวข้องกับรถ
-    """
-    car = get_object_or_404(Car, pk=car_id)
-    schedules = Schedule.objects.filter(car=car).order_by('date') # ดึงข้อมูลการจองเรียงตามวันที่
-    return render(request, 'booking_schedule.html', {'car': car, 'schedules': schedules})
+    # กรองรายการที่ได้รับการยืนยันแล้ว
+    schedules = Schedule.objects.filter(car_id=car_id, is_booked=True)
 
+    return render(request, 'car_schedule.html', {'schedules': schedules})
 
 def confirm_selection(request):
-    if request.method == "POST":
-        selected_date = request.POST.get('date')
-        selected_time = request.POST.get('time')
-        car_id = request.POST.get('car_id')
-
-        if not selected_date or not selected_time or not car_id:
-            return render(request, 'error.html', {'message': 'ข้อมูลไม่ครบถ้วน'})
-
-        car = get_object_or_404(Car, id=car_id)
-        
-        # บันทึกข้อมูลลงฐานข้อมูล
-        Schedule.objects.create(car=car, date=selected_date, time=selected_time)
-
-        # หลังบันทึกเสร็จ กลับไปหน้ารายการรถ
-        return HttpResponseRedirect(reverse('car_list_by_type', args=[car.car_type.id]))
-
-    # สำหรับคำขอแบบ GET (เพื่อแสดงหน้า)
     selected_date = request.GET.get('date')
     selected_time = request.GET.get('time')
     car_id = request.GET.get('car_id')
-    context = {
-        'date': selected_date,
-        'time': 'ช่วงเช้า' if selected_time == 'morning' else 'ช่วงบ่าย',
-        'car_id': car_id,
-    }
-    return render(request, 'confirm_selection.html', context)
+
+    if selected_date and selected_time and car_id:
+        car = Car.objects.get(id=car_id)
+        return render(request, 'confirm_selection.html', {
+            'selected_date': selected_date,
+            'selected_time': selected_time,
+            'car': car,
+        })
+    else:
+        return render(request, 'error.html', {'message': 'ข้อมูลไม่ครบถ้วน'})
 
 def book_time(request, car_id):
     # ดึงข้อมูลรถที่ต้องการจอง
-    car = get_object_or_404(Car, pk=car_id)  
+    car = get_object_or_404(Car, pk=car_id)
 
     if request.method == 'POST':
         selected_date = request.POST.get('date')  # รับวันที่จากฟอร์ม
@@ -196,9 +193,8 @@ def book_time(request, car_id):
 
         # ตรวจสอบว่าได้เลือกข้อมูลครบถ้วนหรือยัง
         if selected_date and selected_time:
-            # บันทึกข้อมูลการจอง
-            Schedule.objects.create(car=car, date=selected_date, time=selected_time)
-            return redirect('car_schedule', car_id=car.id)  # กลับไปยังหน้าตารางงาน
+            # ส่งข้อมูลไปยังหน้าแจ้งเตือน
+            return redirect('confirm_selection', date=selected_date, time=selected_time, car_id=car.id)
         else:
             # ถ้าข้อมูลไม่ครบถ้วน จะส่ง error message ไปยังหน้าจอง
             return render(request, 'error.html', {'message': 'กรุณาเลือกวันที่และช่วงเวลาให้ครบถ้วน'})
@@ -208,8 +204,12 @@ def book_time(request, car_id):
 
 # แสดงรายการรถที่รอการอนุมัติ
 def car_approval_list(request):
-    cars_pending = Car.objects.filter(status='Pending')  # ดึงเฉพาะรถที่รอการอนุมัติ
+    # ดึงเฉพาะรถที่รอการอนุมัติ
+    cars_pending = Car.objects.filter(status='Pending')
+
+    # ส่งข้อมูล car_type ไปพร้อมกับ cars
     return render(request, 'car_approval_list.html', {'cars': cars_pending})
+
 
 # ฟังก์ชันสำหรับอนุมัติรถ
 def approve_car(request, car_id):
@@ -227,9 +227,11 @@ def car_list_by_type_view(request, type_id):
     car_type = get_object_or_404(CarType, id=type_id)
     
     # ใช้ car_type.cars.all() เพื่อดึงรถทั้งหมดที่เกี่ยวข้องกับ car_type นี้
-    cars = car_type.cars.all().filter(status='Approved').exclude(image__isnull=True).exclude(image='')
-    
+    cars = car_type.cars.filter(status='Approved').exclude(image__isnull=True).exclude(image='')
+
     return render(request, 'car_list.html', {'cars': cars, 'car_type': car_type})
+
+
 
 def pending_car_list(request):
     cars = Car.objects.filter(status='Pending').exclude(image__isnull=True).exclude(image='')
@@ -300,3 +302,157 @@ def toggle_car_status(request, car_id):
     
     # หลังจากเปลี่ยนสถานะแล้ว ให้ย้อนกลับไปยังหน้ารายละเอียดของรถ
     return redirect('car_detail', car_id=car.id)
+
+def my_cars(request):
+    # ดึงข้อมูลรถที่เจ้าของเป็นผู้ใช้ปัจจุบัน
+    cars = Car.objects.filter(owner=request.user)
+
+    # ส่งข้อมูลรถไปยัง template
+    return render(request, 'my_cars.html', {'cars': cars})
+
+# ฟังก์ชันสำหรับการยืนยันการจอง
+def confirm_reservation(request, reservation_id):
+    # ตรวจสอบว่ามีการจองนี้ในระบบหรือไม่
+    schedule = get_object_or_404(Schedule, id=reservation_id)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')  # ค่าจากปุ่มยืนยันหรือปฏิเสธ
+        
+        if action == 'approve':
+            # ถ้าเลือกยืนยัน
+            schedule.is_booked = True  # อัพเดตสถานะการจองให้เป็นยืนยัน
+            schedule.save()
+
+            # สร้างการแจ้งเตือนให้ผู้จองทราบว่าเจ้าของรถยืนยันการจองแล้ว
+            Notification.objects.create(
+                user=schedule.car.owner,  # เจ้าของรถ
+                message=f"เจ้าของรถ {schedule.car.name} ได้รับการยืนยันการจองแล้ว สำหรับวันที่ {schedule.date} เวลา {schedule.time}",
+                schedule=schedule,
+                is_confirmed=True,
+                is_approved=True  # ตั้งค่าการยืนยันการจอง
+            )
+        elif action == 'reject':
+            # ถ้าเลือกปฏิเสธ
+            schedule.is_booked = False  # เปลี่ยนสถานะเป็นไม่ยืนยัน
+            schedule.save()
+
+            # สร้างการแจ้งเตือนให้ผู้จองทราบว่าเจ้าของรถปฏิเสธการจอง
+            Notification.objects.create(
+                user=schedule.car.owner,  # เจ้าของรถ
+                message=f"เจ้าของรถ {schedule.car.name} ได้ปฏิเสธการจองของคุณ สำหรับวันที่ {schedule.date} เวลา {schedule.time}",
+                schedule=schedule,
+                is_confirmed=True,
+                is_approved=False  # ตั้งค่าการปฏิเสธการจอง
+            )
+
+        return redirect('notification_list')  # รีไดเรกต์ไปที่หน้าการแจ้งเตือนของผู้จอง
+
+
+# ฟังก์ชันการสร้างการจอง
+def confirm_booking(request):
+    if request.method == 'POST':
+        selected_date = request.POST.get('date')
+        selected_time = request.POST.get('time')
+        car_id = request.POST.get('car_id')
+
+        # ตรวจสอบข้อมูล
+        if not selected_date or not selected_time or not car_id:
+            return render(request, 'error.html', {'message': 'ข้อมูลไม่ครบถ้วน'})
+        
+        # ดึงข้อมูลรถ
+        car = get_object_or_404(Car, id=car_id)
+        
+        # สร้างการจองในสถานะ "รอการยืนยัน"
+        schedule = Schedule.objects.create(
+            car=car,
+            date=selected_date,
+            time=selected_time,
+            is_booked=False  # รอการยืนยันจากเจ้าของรถ
+        )
+
+        # ตรวจสอบว่า schedule ถูกสร้างหรือไม่
+        if schedule:
+            # สร้างการแจ้งเตือนให้เจ้าของรถ
+            Notification.objects.create(
+                user=car.owner,
+                message=f"คุณมีการจองรถ {car.name} จาก {request.user.username} สำหรับวันที่ {selected_date} ช่วงเวลา {selected_time}. โปรดตรวจสอบและอนุมัติ",
+                schedule=schedule  # ผูกการแจ้งเตือนกับการจอง
+            )
+
+            messages.success(request, "การจองถูกบันทึกและแจ้งเตือนไปยังเจ้าของรถแล้ว.")
+            return redirect('notification_list')  # เปลี่ยนไปหน้าแสดงรายการแจ้งเตือน
+        else:
+            messages.error(request, "เกิดข้อผิดพลาดในการสร้างการจอง")
+    
+    return render(request, 'book_time.html', {'car': car})
+
+
+@login_required
+def create_booking(request, car_id):
+    car = get_object_or_404(Car, id=car_id)
+
+    if request.method == 'POST':
+        selected_date = request.POST.get('date')
+        selected_time = request.POST.get('time')
+
+        if selected_date and selected_time:
+            # สร้างการจองในฐานข้อมูล
+            schedule = Schedule.objects.create(
+                car=car,
+                date=selected_date,
+                time=selected_time,
+                is_booked=False  # การจองยังไม่ได้รับการยืนยัน
+            )
+
+            # สร้างการแจ้งเตือนให้เจ้าของรถ
+            Notification.objects.create(
+                user=car.owner,
+                message=f"คุณมีการจองรถ {car.name} จาก {request.user.username} สำหรับวันที่ {selected_date} ช่วงเวลา {selected_time}. โปรดตรวจสอบและอนุมัติ",
+                schedule=schedule  # ผูกการแจ้งเตือนกับการจอง
+            )
+
+            messages.success(request, "การจองถูกบันทึกและแจ้งเตือนไปยังเจ้าของรถแล้ว.")
+            return redirect('notification_list')  # เปลี่ยนไปหน้าแสดงรายการแจ้งเตือน
+
+        else:
+            messages.error(request, "กรุณาเลือกวันที่และช่วงเวลาให้ครบถ้วน.")
+    
+    return render(request, 'book_time.html', {'car': car})
+
+def notification_list(request):
+    # ตรวจสอบว่า user ได้รับการแจ้งเตือนหรือไม่
+    notifications = Notification.objects.filter(user=request.user).order_by('-timestamp')  # เรียงตามเวลาล่าสุดก่อน
+
+    # ส่งข้อมูลไปที่ template
+    return render(request, 'notification_list.html', {'notifications': notifications})
+
+
+def parse_date(date_str):
+    try:
+        # แปลงวันที่จากรูปแบบที่ไม่ตรงกับ Django ไปเป็น YYYY-MM-DD
+        return datetime.strptime(date_str, '%d-%m-%Y').strftime('%Y-%m-%d')
+    except ValueError:
+        return None
+
+
+from .models import Car, Review
+from .forms import ReviewForm
+
+def car_review_view(request, car_id):
+    car = get_object_or_404(Car, id=car_id)
+    reviews = CarReview.objects.filter(car=car)
+
+    if request.method == "POST":
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.car = car
+            review.user = request.user  # กำหนดผู้ใช้ที่ส่งรีวิว
+            review.save()
+            return redirect('car_review', car_id=car.id)  # รีไดเร็กไปหน้ารีวิวหลังจากบันทึกเสร็จ
+
+    else:
+        form = ReviewForm()
+
+    return render(request, 'car_review.html', {'car': car, 'reviews': reviews, 'form': form})
+

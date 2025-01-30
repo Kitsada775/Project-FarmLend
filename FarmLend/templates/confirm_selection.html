@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,12 +12,11 @@
         <p>วันที่ที่คุณเลือก: <span class="font-bold">{{ date }}</span></p>
         <p>ช่วงเวลาที่คุณเลือก: <span class="font-bold">{{ time }}</span></p>
 
-        <form method="POST" action="{% url 'confirm_selection' %}">
+        <form method="POST" action="{% url 'confirm_booking' %}">
             {% csrf_token %}
-            <input type="hidden" name="date" value="{{ date }}">
-            <input type="hidden" name="time" value="{{ time }}">
-            <input type="hidden" name="car_id" value="{{ car_id }}">
-
+            <input type="hidden" name="date" value="{{ selected_date }}">
+            <input type="hidden" name="time" value="{{ selected_time }}">
+            <input type="hidden" name="car_id" value="{{ car.id }}">
             <div class="flex justify-around mt-6">
                 <button type="button" onclick="window.history.back()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
                     ยกเลิก
@@ -27,6 +26,7 @@
                 </button>
             </div>
         </form>
+        
     </div>
 </body>
 </html>

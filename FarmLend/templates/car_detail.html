@@ -142,6 +142,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>{{ car.name }}</h1>
@@ -167,8 +168,14 @@
             <p><strong>ที่อยู่:</strong> {{ car.owner.address }}</p>
         </div>
 
+        <!-- ปุ่มรีวิวรถจะถูกย้ายมาที่นี่ -->
+        <div class="button-container">
+            <a href="{% url 'car_review' car.id %}" class="main-button">รีวิวรถนี้</a>
+        </div>
+
         <!-- แสดงปุ่มสำหรับเจ้าของรถเพื่อเปลี่ยนสถานะ -->
-        {% if car.owner == request.user %}
+        {% if car.owner == request.user or request.user.is_staff %}
+        <div class="button-container"></div>
             <form action="{% url 'toggle_car_status' car.id %}" method="post">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-warning">
@@ -189,6 +196,15 @@
                 <button class="main-button" onclick="openModal()">เลือกช่วงเวลา</button>
             {% endif %}
         </div>
+
+        <!-- ปุ่มแก้ไขและลบสำหรับเจ้าของรถหรือแอดมิน -->
+        {% if car.owner == request.user or request.user.is_staff %}
+            <a href="{% url 'edicar' car.id car.car_type.id %}" class="btn btn-warning">แก้ไขรถ</a>
+            <form action="{% url 'delcar' car.id car.car_type.id %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" onclick="return confirm('คุณต้องการลบรถคันนี้หรือไม่?')">ลบรถ</button>
+            </form>
+        {% endif %}
     </div>
 
     <!-- Modal -->

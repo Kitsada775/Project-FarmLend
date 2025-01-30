@@ -55,7 +55,7 @@ ROOT_URLCONF = "FarmLend.urls"
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'templates'],  # ตั้งค่าให้ Django รู้จักโฟลเดอร์ 'templates'
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

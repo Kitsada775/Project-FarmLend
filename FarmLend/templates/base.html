@@ -13,12 +13,31 @@
         <!-- ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่ -->
         {% if user.is_authenticated %}
             <div class="flex gap-4">
+                <!-- ปุ่ม Home -->
+                <a href="{% url 'car_type_list' %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                
+                <!-- ปุ่มแจ้งเตือน -->
+                <a href="{% url 'notification_list' %}" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">
+                    <i class="fas fa-bell"></i> แจ้งเตือน
+                </a>
+
+                <!-- ปุ่มโปรไฟล์ -->
                 <a href="{% url 'profile' %}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                    โปรไฟล์ของฉัน
+                    <i class="fas fa-user"></i> โปรไฟล์ของฉัน
                 </a>
+
+                 <!-- ปุ่มรถของฉัน -->
+                 <a href="{% url 'my_cars' %}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    <i class="fas fa-car"></i> รถของฉัน
+                </a>
+
+                <!-- ปุ่มออกจากระบบ -->
                 <a href="{% url 'logout' %}" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                    ออกจากระบบ
+                    <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
                 </a>
+
             </div>
         {% endif %}
     </nav>

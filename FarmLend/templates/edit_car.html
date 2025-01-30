@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2 class="text-2xl font-bold mb-6">แก้ไขข้อมูลรถ</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mb-4">
+            {{ form.as_p }}
+        </div>
+        <button type="submit" class="bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600">บันทึกการแก้ไข</button>
+    </form>
+    
+    <a href="{% url 'car_list_by_type' type_id=car.car_type.id %}" class="text-gray-500 mt-4 inline-block">กลับ</a>
+{% endblock %}

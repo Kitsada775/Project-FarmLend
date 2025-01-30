@@ -5,7 +5,7 @@
 {% block content %}
     <!-- ปุ่มเพิ่มรายการรถ -->
     <a href="/addcar/{{ car_type.id }}" class="absolute top-20 right-2 bg-blue-500 text-white py-2 px-5 rounded-lg hover:bg-blue-600 transition-colors duration-300">
-        เพิ่มรายการรถ
+        <i class="fas fa-plus-circle"></i>เพิ่มรายการรถ
     </a>
 
     <a href="{% url 'car_type_list' %}" class="absolute top-20 left-2 bg-gray-500 text-white py-2 px-5 rounded-lg shadow-lg hover:bg-gray-600 transition-colors duration-300">
@@ -43,12 +43,14 @@
                     </a>
                 </div>
 
-                <!-- ปุ่มแก้ไขและลบ -->
+                <!-- ปุ่มแก้ไขและลบ (แสดงเฉพาะเจ้าของรถและแอดมิน) -->
+                {% if request.user == car.owner or request.user.is_staff %}
                 <div class="flex gap-4 mt-4">
-                    <a href="{% url 'edicar' id=car.id type_id=car_type.id %}" class="text-blue-500 hover:underline">แก้ไข</a>
+                    <a href="{% url 'edicar' id=car.id type_id=car.car_type.id %}" class="text-blue-500 hover:underline">แก้ไข</a>
                     <!-- ปุ่มลบรถ -->
                     <a href="javascript:void(0)" class="delete-btn text-red-500 hover:underline" data-car-id="{{ car.id }}">ลบ</a>
                 </div>
+                {% endif %}
             </div>
             {% empty %}
                 <p class="text-center col-span-3 text-gray-500">ไม่มีรถที่ถูกอนุมัติในหมวดหมู่นี้</p>
