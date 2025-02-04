@@ -23,6 +23,12 @@
                     <i class="fas fa-bell"></i> แจ้งเตือน
                 </a>
 
+                {% if request.user.is_staff %}
+                <a href="{% url 'user_management' %}" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">
+                    <i class="fas fa-users"></i> ตรวจสอบผู้ใช้งาน
+                </a>
+                {% endif %}
+
                 <!-- ปุ่มโปรไฟล์ -->
                 <a href="{% url 'profile' %}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                     <i class="fas fa-user"></i> โปรไฟล์ของฉัน

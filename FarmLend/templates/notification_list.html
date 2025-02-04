@@ -6,74 +6,67 @@
     <title>การแจ้งเตือน</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto p-6">
-        <h1 class="text-2xl font-semibold mb-4">การแจ้งเตือนของคุณ</h1>
+<body class="bg-gradient-to-br from-gray-200 to-gray-100 min-h-screen flex items-center justify-center">
+    <div class="container mx-auto p-6 bg-white shadow-lg rounded-lg max-w-4xl">
+        
+        <!-- ปุ่มกลับ -->
+        <a href="{% url 'car_type_list' %}" 
+            class="bg-gray-500 text-white py-2 px-5 rounded-lg shadow-md hover:bg-gray-600 transition-all duration-300 inline-block mb-4">
+            ⬅ กลับ
+        </a>
 
-        <ul>
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">🔔 การแจ้งเตือนของคุณ</h1>
+
+        <ul class="space-y-4">
             {% for notification in notifications %}
-                <li class="bg-white p-4 rounded shadow-md mb-4">
-                    <p>{{ notification.message }}</p>
+                <li class="bg-white p-5 rounded-lg shadow-md border-l-4 
+                    {% if notification.is_confirmed %}
+                        border-green-500
+                    {% else %}
+                        border-yellow-500
+                    {% endif %}">
+                    
+                    <p class="text-gray-800 font-semibold">{{ notification.message }}</p>
                     <span class="text-gray-500 text-sm">{{ notification.timestamp }}</span>
 
                     {% if notification.schedule %}
                         {% if not notification.is_confirmed %}
                             <!-- ถ้าการแจ้งเตือนยังไม่ได้รับการยืนยัน -->
-                            <form method="POST" action="{% url 'confirm_reservation' reservation_id=notification.schedule.id %}" class="mt-3" id="reservation-form-{{ notification.schedule.id }}">
+                            <form method="POST" action="{% url 'confirm_reservation' reservation_id=notification.schedule.id %}" class="mt-3">
                                 {% csrf_token %}
-                                <button type="button" onclick="confirmAction('{{ notification.schedule.id }}', 'approve')" class="bg-green-500 text-white px-4 py-2 rounded mr-2" id="approve-btn-{{ notification.schedule.id }}">ยืนยัน</button>
-                                <button type="button" onclick="confirmAction('{{ notification.schedule.id }}', 'reject')" class="bg-red-500 text-white px-4 py-2 rounded" id="reject-btn-{{ notification.schedule.id }}">ปฏิเสธ</button>
+                                <button type="submit" name="action" value="approve" 
+                                    class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-all duration-300">
+                                    ✅ ยืนยัน
+                                </button>
+                                <button type="submit" name="action" value="reject" 
+                                    class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all duration-300">
+                                    ❌ ปฏิเสธ
+                                </button>
                             </form>
                         {% else %}
-                            <!-- ถ้าได้รับการยืนยันแล้ว -->
-                            <p class="text-green-500 text-sm mt-2">
+                            <p class="mt-3 text-sm font-semibold 
                                 {% if notification.is_approved %}
-                                    การจองได้รับการยืนยันแล้ว
+                                    text-green-600
                                 {% else %}
-                            <p class="text-red-500 text-sm mt-2">
-                                    เจ้าของรถปฏิเสธการจอง
+                                    text-red-600
+                                {% endif %}">
+                                {% if notification.is_approved %}
+                                    ✅ การจองได้รับการยืนยันแล้ว
+                                {% else %}
+                                    ❌ เจ้าของรถปฏิเสธการจอง
                                 {% endif %}
                             </p>
                         {% endif %}
                     {% else %}
-                        <p class="text-gray-500 text-sm mt-2">ข้อมูลการจองไม่ถูกต้อง</p>
+                        <p class="text-red-500 text-sm mt-2">⚠ ข้อมูลการจองไม่ถูกต้อง</p>
                     {% endif %}
                 </li>
             {% empty %}
-                <li class="text-center text-gray-500">ไม่มีการแจ้งเตือนในขณะนี้</li>
+                <li class="text-center text-gray-500 bg-gray-50 py-4 rounded-lg">
+                    ไม่มีการแจ้งเตือนในขณะนี้
+                </li>
             {% endfor %}
         </ul>
     </div>
-
-    <script>
-        // ฟังก์ชันสำหรับยืนยันหรือปฏิเสธ
-        function confirmAction(reservationId, action) {
-            // ซ่อนปุ่มหลังจากกด
-            document.getElementById(`approve-btn-${reservationId}`).style.display = 'none';
-            document.getElementById(`reject-btn-${reservationId}`).style.display = 'none';
-            
-            // เปลี่ยนข้อความหลังจากกดปุ่ม
-            var message = action === 'approve' ? 'การจองได้รับการยืนยันแล้ว' : 'เจ้าของรถปฏิเสธการจอง';
-            var statusElement = document.createElement('p');
-            statusElement.classList.add('text-green-500', 'text-sm', 'mt-2');
-            statusElement.textContent = message;
-    
-            // เพิ่มข้อความใหม่ลงใน li
-            var listItem = document.querySelector(`#reservation-form-${reservationId}`).closest('li');
-            listItem.appendChild(statusElement);
-    
-            // ส่งข้อมูลไปยัง server
-            var form = document.getElementById(`reservation-form-${reservationId}`);
-            var input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'action';
-            input.value = action;
-            form.appendChild(input);
-    
-            // ส่ง form
-            form.submit();
-        }
-    </script>
-    
 </body>
 </html>

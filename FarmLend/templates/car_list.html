@@ -87,7 +87,6 @@
 
     // เมื่อกดยืนยันการลบ
     confirmDelete.addEventListener('click', function() {
-        // ใช้ Ajax เพื่อทำการลบโดยไม่ต้องโหลดหน้าใหม่
         fetch(`/delete_car/${carIdToDelete}/`, {
             method: 'DELETE',
             headers: {
@@ -97,10 +96,9 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                document.querySelector(`#car-${carIdToDelete}`).remove();  // ลบจากหน้า
-                deleteModal.style.display = 'none'; // ซ่อน modal
+                window.location.href = data.redirect_url;  // เปลี่ยนเส้นทางไปที่ประเภทของรถ
             } else {
-                alert("เกิดข้อผิดพลาดในการลบรถ");
+                alert("เกิดข้อผิดพลาดในการลบรถ: " + data.error);
             }
         });
     });

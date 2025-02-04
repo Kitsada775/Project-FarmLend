@@ -10,6 +10,13 @@
     <div class="container mx-auto p-6">
         <h1 class="text-2xl font-semibold mb-4">ตารางการจองสำหรับรถ: {{ car.name }}</h1>
 
+        <!-- ปุ่มสลับการเรียงลำดับ -->
+        <div class="mb-4">
+            <button id="sortButton" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                เรียงจากใหม่สุด
+            </button>
+        </div>
+
         <table class="min-w-full bg-white">
             <thead>
                 <tr>
@@ -18,11 +25,19 @@
                     <th class="py-2 px-4 border-b">สถานะ</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="scheduleTable">
                 {% for schedule in schedules %}
-                    <tr>
-                        <td class="py-2 px-4 border-b">{{ schedule.date }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.time }}</td>
+                    <tr class="schedule-row">
+                        <td class="py-2 px-4 border-b" data-date="{{ schedule.date|date:'Y-m-d' }}">{{ schedule.date }}</td>
+                        <td class="py-2 px-4 border-b">
+                            {% if schedule.time == "morning" %}
+                                ช่วงเช้า
+                            {% elif schedule.time == "afternoon" %}
+                                ช่วงบ่าย
+                            {% else %}
+                                {{ schedule.time }}
+                            {% endif %}
+                        </td>
                         <td class="py-2 px-4 border-b">{{ schedule.is_booked|yesno:"ยืนยันแล้ว,รอการยืนยัน" }}</td>
                     </tr>
                 {% empty %}
@@ -33,5 +48,26 @@
             </tbody>
         </table>
     </div>
+
+    <script>
+        document.getElementById("sortButton").addEventListener("click", function() {
+            let table = document.getElementById("scheduleTable");
+            let rows = Array.from(table.getElementsByClassName("schedule-row"));
+            let isAscending = this.getAttribute("data-sort") === "asc";
+
+            rows.sort((a, b) => {
+                let dateA = new Date(a.cells[0].getAttribute("data-date"));
+                let dateB = new Date(b.cells[0].getAttribute("data-date"));
+
+                return isAscending ? dateB - dateA : dateA - dateB;
+            });
+
+            rows.forEach(row => table.appendChild(row));
+
+            // เปลี่ยนสถานะการเรียง
+            this.setAttribute("data-sort", isAscending ? "desc" : "asc");
+            this.textContent = isAscending ? "เรียงจากเก่าสุด" : "เรียงจากใหม่สุด";
+        });
+    </script>
 </body>
 </html>

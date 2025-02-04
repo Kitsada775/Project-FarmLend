@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="text-2xl font-semibold mb-6">รายการผู้ใช้งาน</h1>
+
+<table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+    <thead>
+        <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+            <th class="py-3 px-6 text-left">ชื่อผู้ใช้</th>
+            <th class="py-3 px-6 text-left">อีเมล</th>
+            <th class="py-3 px-6 text-left">สิทธิ์</th>
+            <th class="py-3 px-6 text-center">การจัดการ</th>
+        </tr>
+    </thead>
+    <tbody class="text-gray-600 text-sm font-light">
+        {% for user in users %}
+        <tr class="border-b border-gray-200 hover:bg-gray-100">
+            <td class="py-3 px-6 text-left">{{ user.username }}</td>
+            <td class="py-3 px-6 text-left">{{ user.email }}</td>
+            <td class="py-3 px-6 text-left">
+                {% if user.is_staff %}
+                    <span class="text-green-500">แอดมิน</span>
+                {% else %}
+                    <span class="text-blue-500">ผู้ใช้ทั่วไป</span>
+                {% endif %}
+            </td>
+            <td class="py-3 px-6 text-center">
+                {% if not user.is_staff %}
+                    <a href="{% url 'delete_user' user.id %}" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                        ลบ
+                    </a>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4" class="text-center py-4 text-gray-500">ไม่มีผู้ใช้งานในระบบ</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

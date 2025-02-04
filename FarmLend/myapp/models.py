@@ -30,14 +30,22 @@ class Car(models.Model):
 
 class Schedule(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='schedules')
-    date = models.DateField()
-    time = models.CharField(max_length=20, choices=[('morning', 'ช่วงเช้า'), ('afternoon', 'ช่วงบ่าย')])
-    is_booked = models.BooleanField(default=False)
+    date = models.DateField()  # วันที่จอง
+    time = models.CharField(
+        max_length=20,
+        choices=[('morning', 'ช่วงเช้า'), ('afternoon', 'ช่วงบ่าย')]  # เลือกช่วงเวลา
+    )
+    is_booked = models.BooleanField(default=False)  # ตรวจสอบว่าถูกจองแล้วหรือยัง
+    booked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,  # เชื่อมกับผู้ใช้ที่ทำการจอง
+        on_delete=models.CASCADE,
+        related_name='bookings',
+        null=True, blank=True  # อนุญาตให้ว่างได้สำหรับการจองที่ยังไม่มีเจ้าของ
+    )
 
     def __str__(self):
-        return f"{self.car.name} - {self.date} ({self.time})"
-
-    
+        return f"{self.car.name} - {self.date} ({self.get_time_display()})"
+   
 
 class CarForm(forms.ModelForm):
     class Meta:
@@ -75,11 +83,12 @@ class CustomUser(AbstractUser):
 
 class Notification(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # ผู้ที่ได้รับการแจ้งเตือน
+    borrower = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='borrower_notifications', null=True, blank=True)
     message = models.TextField()  # ข้อความแจ้งเตือน
     timestamp = models.DateTimeField(auto_now_add=True)  # เวลาที่แจ้งเตือนถูกสร้าง
     schedule = models.ForeignKey(Schedule, null=True, blank=True, on_delete=models.SET_NULL)  # เชื่อมโยงกับการจอง
     is_confirmed = models.BooleanField(default=False)  # สถานะการยืนยันการจอง
-    is_approved = models.BooleanField(default=False)  # สถานะการยืนยันการจอง
+    is_approved = models.BooleanField(default=False)  # สถานะการอนุมัติจอง
 
     def __str__(self):
         return f"Notification for {self.user.username} at {self.timestamp}"

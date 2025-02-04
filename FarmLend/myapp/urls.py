@@ -1,5 +1,8 @@
 from django.urls import path
 from . import views
+from .views import notification_list
+from .views import user_management, delete_user
+from .views import delete_car
 
 urlpatterns = [
     # หน้าแรก
@@ -28,6 +31,7 @@ urlpatterns = [
 
     # ลบรถ
     path('delcar/<int:car_id>/<int:type_id>/', views.delcar, name='delcar'), 
+    path('delete_car/<int:car_id>/', delete_car, name='delete_car'),
 
     # ตารางงานของรถ
     path('car/schedule/<int:car_id>/', views.car_schedule, name='car_schedule'), 
@@ -85,7 +89,10 @@ urlpatterns = [
 
     path('cars/<int:car_id>/reviews/', views.car_review_view, name='car_review'),  # เพิ่มเส้นทางนี้
 
-
+    path('notification_list/', notification_list, name='notification_list'),
+    
+    path('users/', user_management, name='user_management'),
+    path('users/delete/<int:user_id>/', delete_user, name='delete_user'),
 
 
 
