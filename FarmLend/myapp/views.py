@@ -11,6 +11,7 @@ from .models import Car, Notification, Schedule
 from datetime import datetime
 from django.contrib.admin.views.decorators import staff_member_required
 from myapp.models import CustomUser
+from django.db.models import Q
 
 
 @staff_member_required  # ให้เฉพาะแอดมินเข้าถึงได้
@@ -201,24 +202,6 @@ def confirm_selection(request):
     else:
         return render(request, 'error.html', {'message': 'ข้อมูลไม่ครบถ้วน'})
 
-def book_time(request, car_id):
-    # ดึงข้อมูลรถที่ต้องการจอง
-    car = get_object_or_404(Car, pk=car_id)
-
-    if request.method == 'POST':
-        selected_date = request.POST.get('date')  # รับวันที่จากฟอร์ม
-        selected_time = request.POST.get('time')  # รับช่วงเวลาจากฟอร์ม
-
-        # ตรวจสอบว่าได้เลือกข้อมูลครบถ้วนหรือยัง
-        if selected_date and selected_time:
-            # ส่งข้อมูลไปยังหน้าแจ้งเตือน
-            return redirect('confirm_selection', date=selected_date, time=selected_time, car_id=car.id)
-        else:
-            # ถ้าข้อมูลไม่ครบถ้วน จะส่ง error message ไปยังหน้าจอง
-            return render(request, 'error.html', {'message': 'กรุณาเลือกวันที่และช่วงเวลาให้ครบถ้วน'})
-
-    # ถ้าไม่ใช่ POST, ให้แสดงฟอร์มสำหรับเลือกเวลาและวันที่
-    return render(request, 'book_time.html', {'car': car})
 
 # แสดงรายการรถที่รอการอนุมัติ
 def car_approval_list(request):
@@ -394,19 +377,10 @@ def create_booking(request, car_id):
                 booked_by=request.user
             )
 
-            # ส่งการแจ้งเตือนให้เจ้าของรถ
             Notification.objects.create(
-                user=car.owner,  # เจ้าของรถ
+                user=car.owner,  # เจ้าของรถ (ผู้รับการแจ้งเตือน)
                 borrower=request.user,  # ผู้ยืม
                 message=f"คุณมีการจองรถ {car.name} จาก {request.user.username} สำหรับวันที่ {selected_date} ช่วง {schedule.get_time_display()} โปรดตรวจสอบและอนุมัติ",
-                schedule=schedule
-            )
-
-            # ส่งการแจ้งเตือนให้ผู้ยืมด้วย
-            Notification.objects.create(
-                user=request.user,  # ผู้ยืม
-                borrower=car.owner,  # เจ้าของรถ
-                message=f"คุณได้ทำการจองรถ {car.name} สำหรับวันที่ {selected_date} ช่วง {schedule.get_time_display()} โปรดรอการยืนยันจากเจ้าของรถ",
                 schedule=schedule
             )
 
@@ -427,9 +401,17 @@ def notification_list(request):
     notifications_as_borrower = Notification.objects.filter(borrower=request.user).order_by('-timestamp')
 
     # รวมทั้งสองรายการ
-    notifications = notifications_as_user | notifications_as_borrower
+    notifications = Notification.objects.filter(
+        Q(user=request.user) |  # เจ้าของรถ
+        Q(borrower=request.user)  # ผู้ยืม
+    ).order_by('-timestamp')
+    
+    return render(request, 'notification_list.html', {
+        'notifications': notifications,
+        'is_owner': Car.objects.filter(owner=request.user).exists()  # เช็คว่าเป็นเจ้าของรถหรือไม่
+    })
 
-    return render(request, 'notification_list.html', {'notifications': notifications})
+    
 
 
 from .models import Car, Review
