@@ -1,102 +1,139 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Cars</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>รถของคุณ | My Cars</title>
     <style>
-        /* สไตล์พื้นฐานสำหรับ body และ container */
+        /* ตั้งค่าพื้นฐาน */
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f7fafc;
+            background-color: #f4f4f4;
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            text-align: center;
             min-height: 100vh;
-            box-sizing: border-box;
         }
 
+        /* กล่องหลัก */
         .container {
             max-width: 900px;
             width: 100%;
-            padding: 40px;
-            background-color: #ffffff;
+            background: white;
+            padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-top: 30px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
         }
 
+        /* หัวข้อ */
         h1 {
-            font-size: 2.5rem;
+            font-size: 28px;
             color: #333;
-            margin-bottom: 30px;
-            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        /* รายการรถ */
+        .car-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
         }
 
         .car-item {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            padding: 20px;
-            border: 1px solid #ddd;
+            background: #ffffff;
             border-radius: 8px;
-            background-color: #f9fafb;
-            transition: all 0.3s ease;
+            overflow: hidden;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s;
+            text-align: left;
+            padding: 15px;
         }
 
         .car-item:hover {
-            background-color: #f1f5f9;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-5px);
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
         }
 
+        /* รูปรถ */
         .car-item img {
             width: 100%;
             height: auto;
             border-radius: 8px;
-            margin-bottom: 20px;
         }
 
+        /* ชื่อรถ */
         .car-item h3 {
-            font-size: 1.8rem;
+            font-size: 20px;
             font-weight: 700;
             color: #333;
-            margin-bottom: 10px;
+            margin: 10px 0;
         }
 
+        /* คำอธิบาย */
         .car-item p {
-            font-size: 1.1rem;
-            color: #555;
-            line-height: 1.6;
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
         }
 
+        /* สถานะ */
+        .status {
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .status.available {
+            color: #28a745;
+        }
+
+        .status.unavailable {
+            color: #dc3545;
+        }
+
+        /* ปุ่มแอคชัน */
         .action-buttons {
             display: flex;
             justify-content: space-between;
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         .action-buttons a {
-            padding: 12px 20px;
-            background-color: #007bff;
+            display: inline-block;
+            padding: 10px 15px;
+            font-size: 14px;
             color: white;
-            border-radius: 5px;
-            font-size: 1rem;
             text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            transition: background 0.3s;
         }
 
-        .action-buttons a:hover {
+        .action-buttons a:first-child {
+            background-color: #007bff;
+        }
+
+        .action-buttons a:first-child:hover {
             background-color: #0056b3;
         }
 
+        .action-buttons a:last-child {
+            background-color: #28a745;
+        }
+
+        .action-buttons a:last-child:hover {
+            background-color: #218838;
+        }
+
+        /* ข้อความเมื่อไม่มีรถ */
         .empty-message {
-            font-size: 1.2rem;
+            font-size: 16px;
             color: #999;
+            font-style: italic;
             margin-top: 20px;
         }
     </style>
@@ -104,7 +141,7 @@
 
 <body>
     <div class="container">
-        <h1>รถของคุณ</h1>
+        <h1>🚜 รถของคุณ</h1>
 
         <!-- แสดงรายการรถทั้งหมด -->
         <div class="car-list">
@@ -113,21 +150,17 @@
                     <img src="{{ car.image.url }}" alt="{{ car.name }}">
                     <h3>{{ car.name }}</h3>
                     <p>{{ car.description }}</p>
-                    <p>สถานะ: 
-                        {% if car.is_available %}
-                            <span class="text-green-500">พร้อมใช้งาน</span>
-                        {% else %}
-                            <span class="text-red-500">ไม่พร้อมใช้งาน</span>
-                        {% endif %}
+                    <p class="status {% if car.is_available %}available{% else %}unavailable{% endif %}">
+                        {% if car.is_available %}✔ พร้อมใช้งาน{% else %}❌ ไม่พร้อมใช้งาน{% endif %}
                     </p>
 
                     <div class="action-buttons">
-                        <a href="{% url 'car_detail' car.id %}">ดูรายละเอียด</a>
-                        <a href="{% url 'edicar' car.id car.car_type.id %}">แก้ไขรถ</a>
+                        <a href="{% url 'car_detail' car.id %}">🔍 ดูรายละเอียด</a>
+                        <a href="{% url 'edicar' id=car.id type_id=car.car_type.id %}">✏ แก้ไขรถ</a>
                     </div>
                 </div>
             {% empty %}
-                <p class="empty-message">คุณยังไม่มีรถในระบบ</p>
+                <p class="empty-message">🚗 คุณยังไม่มีรถในระบบ</p>
             {% endfor %}
         </div>
     </div>

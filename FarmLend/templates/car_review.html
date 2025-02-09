@@ -1,118 +1,69 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Reviews</title>
+    <title>รีวิวรถ | {{ car.name }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* สไตล์พื้นฐานสำหรับ body และ container */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-
-        .container {
-            max-width: 800px;
-            width: 100%;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            font-size: 2rem;
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        .review-item {
-            margin-bottom: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: #f1f1f1;
-        }
-
-        .review-item p {
-            font-size: 1.1rem;
-            color: #555;
-        }
-
-        .review-form input,
-        .review-form textarea {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-
-        .review-form button {
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .review-form button:hover {
-            background-color: #0056b3;
-        }
-    </style>
 </head>
 
-<body>
-    <div class="container">
-        <h1>รีวิวรถ: {{ car.name }}</h1>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen px-4">
+
+    <div class="bg-white shadow-xl rounded-2xl p-8 max-w-2xl w-full">
+        <!-- หัวข้อ -->
+        <h1 class="text-3xl font-bold text-gray-800 mb-4 text-center">รีวิวรถ: {{ car.name }}</h1>
         
         <!-- แสดงรีวิวทั้งหมด -->
-        <div class="reviews-list">
+        <div class="space-y-4">
             {% for review in reviews %}
-                <div class="review-item">
-                    <p><strong>{{ review.user.username }}:</strong> {{ review.review_text }}</p>
-                    <p>คะแนน: {{ review.rating }} / 5</p>
+                <div class="bg-gray-50 p-4 rounded-lg shadow-md">
+                    <p class="text-gray-800 font-semibold">{{ review.user.username }}</p>
+                    <p class="text-gray-600">{{ review.review_text }}</p>
+                    <p class="text-yellow-500 font-bold mt-2">⭐ {{ review.rating }} / 5</p>
                 </div>
             {% empty %}
-                <p>ยังไม่มีรีวิวสำหรับรถคันนี้</p>
+                <p class="text-gray-500 text-center">ยังไม่มีรีวิวสำหรับรถคันนี้</p>
             {% endfor %}
         </div>
 
-        <!-- ฟอร์มสำหรับเพิ่มรีวิว -->
-        <div class="review-form">
-            <h2>เพิ่มรีวิวสำหรับรถคันนี้</h2>
-            <form method="POST">
+        <!-- ฟอร์มเพิ่มรีวิว -->
+        <div class="mt-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-2">เพิ่มรีวิวของคุณ</h2>
+            <form method="POST" class="space-y-4">
                 {% csrf_token %}
-                <label for="review_text">ข้อความรีวิว:</label>
-                <textarea name="review_text" id="review_text" rows="4" placeholder="เขียนรีวิวของคุณที่นี่..."></textarea>
-                <br>
+                <textarea name="review_text" id="review_text" rows="4"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    placeholder="เขียนรีวิวของคุณที่นี่..."></textarea>
 
-                <label for="rating">คะแนน:</label>
-                <select name="rating" id="rating">
-                    <option value="1" {% if form.rating.value == '1' %} selected {% endif %}>1 - แย่มาก</option>
-                    <option value="2" {% if form.rating.value == '2' %} selected {% endif %}>2 - ค่อนข้างแย่</option>
-                    <option value="3" {% if form.rating.value == '3' %} selected {% endif %}>3 - ปานกลาง</option>
-                    <option value="4" {% if form.rating.value == '4' %} selected {% endif %}>4 - ดี</option>
-                    <option value="5" {% if form.rating.value == '5' %} selected {% endif %}>5 - ดีเยี่ยม</option>
-                </select>
-                <br>
-                <button type="submit">เพิ่มรีวิว</button>
+                <div class="flex items-center justify-between">
+                    <label for="rating" class="text-gray-700 font-medium">คะแนน:</label>
+                    <select name="rating" id="rating"
+                        class="border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <option value="1">⭐ 1 - แย่มาก</option>
+                        <option value="2">⭐⭐ 2 - ค่อนข้างแย่</option>
+                        <option value="3">⭐⭐⭐ 3 - ปานกลาง</option>
+                        <option value="4">⭐⭐⭐⭐ 4 - ดี</option>
+                        <option value="5">⭐⭐⭐⭐⭐ 5 - ดีเยี่ยม</option>
+                    </select>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-blue-500 hover:bg-blue-600 transition-colors text-white font-semibold py-2 rounded-lg shadow-md">
+                    + เพิ่มรีวิว
+                </button>
             </form>
         </div>
 
-        <div class="button-container">
-            <a href="{% url 'car_detail' car.id %}" class="btn-secondary">กลับไปที่หน้ารายละเอียดของรถ</a>
+        <!-- ปุ่มกลับ -->
+        <div class="mt-6 text-center">
+            <a href="{% url 'car_detail' car.id %}"
+                class="text-blue-500 hover:underline transition-all">
+                ← กลับไปที่หน้ารายละเอียดของรถ
+            </a>
         </div>
     </div>
+
 </body>
 
 </html>

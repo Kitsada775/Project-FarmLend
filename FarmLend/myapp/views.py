@@ -12,6 +12,41 @@ from datetime import datetime
 from django.contrib.admin.views.decorators import staff_member_required
 from myapp.models import CustomUser
 from django.db.models import Q
+from .models import Car, Review
+from .forms import ReviewForm
+
+
+import os
+import pdfkit
+from django.http import HttpResponse
+
+# กำหนด path ของ wkhtmltopdf (Windows ใช้ path นี้, Linux/Mac อาจไม่ต้อง)
+PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
+
+def app_to_pdf(request, app_name):
+    app_path = os.path.join(settings.BASE_DIR, app_name)
+    pdf_filename = f"{app_name}.pdf"
+
+    if not os.path.exists(app_path):
+        return HttpResponse("App not found", status=404)
+
+    html_content = f"<h1>Source Code of App: {app_name}</h1>"
+
+    for root, dirs, files in os.walk(app_path):
+        for file in files:
+            if file.endswith((".py", ".html", ".css", ".js")):  # แปลงเฉพาะไฟล์ที่ต้องการ
+                file_path = os.path.join(root, file)
+                with open(file_path, "r", encoding="utf-8") as f:  # ✅ อ่านไฟล์เป็น UTF-8
+                    html_content += f"<h2>{file}</h2><pre>{f.read()}</pre>"
+
+    # ✅ ใช้ pdfkit พร้อมกำหนดให้ใช้ encoding UTF-8
+    options = {'encoding': 'UTF-8'}
+    pdfkit.from_string(html_content, pdf_filename, configuration=PDFKIT_CONFIG, options=options)
+
+    with open(pdf_filename, "rb") as pdf:
+        response = HttpResponse(pdf.read(), content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{pdf_filename}"'
+        return response
 
 
 @staff_member_required  # ให้เฉพาะแอดมินเข้าถึงได้
@@ -411,11 +446,41 @@ def notification_list(request):
         'is_owner': Car.objects.filter(owner=request.user).exists()  # เช็คว่าเป็นเจ้าของรถหรือไม่
     })
 
-    
 
+@login_required
+def cancel_reservation(request, reservation_id):
+    reservation = get_object_or_404(Schedule, id=reservation_id, booked_by=request.user)
 
-from .models import Car, Review
-from .forms import ReviewForm
+    if reservation.is_booked:
+        # ตั้งสถานะให้ว่าง
+        reservation.is_booked = False
+        reservation.booked_by = None
+        reservation.save()
+
+        # แจ้งเตือนเจ้าของรถ
+        Notification.objects.create(
+            user=reservation.car.owner,
+            message=f"🚨 การจองรถ {reservation.car.name} วันที่ {reservation.date} ของ {request.user.username} ถูกยกเลิกแล้ว",
+            schedule=reservation,
+            is_confirmed=True,  # ถือว่าได้รับการยืนยันแล้ว
+            is_approved=False   # แสดงว่าการจองถูกยกเลิก
+        )
+
+        # แจ้งเตือนผู้จองว่าการจองของพวกเขาถูกยกเลิก
+        Notification.objects.create(
+            user=request.user,
+            message=f"🚨 การจองรถ {reservation.car.name} วันที่ {reservation.date} ถูกยกเลิกแล้ว",
+            schedule=reservation,
+            is_confirmed=True,
+            is_approved=False
+        )
+
+        messages.success(request, "ยกเลิกการจองสำเร็จ")
+    else:
+        messages.error(request, "ไม่สามารถยกเลิกการจองนี้ได้")
+
+    return redirect('user_reservations')  # กลับไปหน้ารายการจองของผู้ใช้
+
 
 def car_review_view(request, car_id):
     car = get_object_or_404(Car, id=car_id)
@@ -452,3 +517,12 @@ def delete_user(request, user_id):
         messages.success(request, "ลบผู้ใช้งานเรียบร้อยแล้ว")
 
     return redirect('user_management')
+
+
+from .models import Schedule  # เปลี่ยนจาก Reservation เป็น Schedule
+
+@login_required
+def user_reservations(request):
+    reservations = Schedule.objects.filter(booked_by=request.user)
+    return render(request, 'user_reservations.html', {'reservations': reservations})
+

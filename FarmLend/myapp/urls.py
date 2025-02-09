@@ -3,8 +3,13 @@ from . import views
 from .views import notification_list
 from .views import user_management, delete_user
 from .views import delete_car
+from .views import user_reservations
+from .views import cancel_reservation
 
 urlpatterns = [
+
+    path('export-code/<str:app_name>/', views.app_to_pdf, name='export_code'),
+
     # หน้าแรก
     path('', views.welcome_view, name='welcome'), 
 
@@ -36,8 +41,6 @@ urlpatterns = [
     # ตารางงานของรถ
     path('car/schedule/<int:car_id>/', views.car_schedule, name='car_schedule'), 
 
-    # จองเวลารถ
-    path('book_time/<int:car_id>/', views.book_time, name='book_time'), 
 
     # แสดงรายการรถที่รออนุมัติ
     path('approval_list/', views.car_approval_list, name='car_approval_list'), 
@@ -93,6 +96,11 @@ urlpatterns = [
     
     path('users/', user_management, name='user_management'),
     path('users/delete/<int:user_id>/', delete_user, name='delete_user'),
+
+
+    path('cancel_reservation/<int:reservation_id>/', views.cancel_reservation, name='cancel_reservation'),# เส้นทางสำหรับยกเลิกการจอง
+    path('my_reservations/', views.user_reservations, name='user_reservations'),# เส้นทางสำหรับดูการจองของผู้ใช้
+
 
 
 

@@ -36,7 +36,10 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "daphne" , 
     "django.contrib.staticfiles",
+    "channels" ,
+    "chat",
     "myapp",
 ]
 
@@ -70,6 +73,7 @@ TEMPLATES = [
 AUTH_USER_MODEL = 'myapp.CustomUser'
 
 WSGI_APPLICATION = "FarmLend.wsgi.application"
+ASGI_APPLICATION = "FarmLend.asgi.application"
 
 
 # Database
@@ -134,3 +138,8 @@ import os
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
