@@ -175,7 +175,6 @@
 
         <!-- แสดงปุ่มสำหรับเจ้าของรถเพื่อเปลี่ยนสถานะ -->
         {% if car.owner == request.user or request.user.is_staff %}
-        <div class="button-container"></div>
             <form action="{% url 'toggle_car_status' car.id %}" method="post">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-warning">
@@ -196,6 +195,21 @@
                 <button class="main-button" onclick="openModal()">เลือกช่วงเวลา</button>
             {% endif %}
         </div>
+
+<!-- ปุ่มสำหรับเริ่มแชท -->
+<div class="button-container mt-4">
+    {% if user.is_authenticated %}
+        {% if user != car.owner %}  <!-- Only show chat button if user is not the car owner -->
+            <a href="{% url 'create_chat_room' car.id %}" class="main-button">
+                💬 แชทกับเจ้าของรถ
+            </a>
+        {% endif %}
+    {% else %}
+        <a href="{% url 'login' %}?next={{ request.path }}" class="main-button">
+            🔑 เข้าสู่ระบบเพื่อแชท
+        </a>
+    {% endif %}
+</div>
 
         <!-- ปุ่มแก้ไขและลบสำหรับเจ้าของรถหรือแอดมิน -->
         {% if car.owner == request.user or request.user.is_staff %}

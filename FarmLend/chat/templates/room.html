@@ -1,0 +1,35 @@
+<!-- chat/templates/chat/room.html -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-6 bg-white shadow-lg rounded-lg max-w-4xl">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Chat Room for {{ room.car.name }}</h1>
+        
+        <!-- ข้อความทั้งหมด -->
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="border-b py-2">
+                    <strong>{{ message.sender.username }}:</strong>
+                    <p>{{ message.content }}</p>
+                    <small class="text-gray-500">{{ message.timestamp }}</small>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- ฟอร์มสำหรับส่งข้อความ -->
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300">ส่งข้อความ</button>
+        </form>
+
+        <a href="{% url 'chat_page' %}" class="text-blue-500 hover:underline">กลับไปหน้าห้องแชท</a>
+    </div>
+</body>
+</html>

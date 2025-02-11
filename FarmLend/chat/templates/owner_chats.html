@@ -1,0 +1,48 @@
+<!-- templates/owner_chats.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>การสนทนาของคุณ</h2>
+    
+    {% if chats %}
+        <div class="chat-list">
+            {% for chat in chats %}
+                <div class="chat-item">
+                    <h4>{{ chat.car.name }}</h4>
+                    <p>ผู้สนใจ: {{ chat.get_other_participant.username }}</p>
+                    {% with last_message=chat.messages.last %}
+                        {% if last_message %}
+                            <p class="last-message">ข้อความล่าสุด: {{ last_message.content|truncatechars:50 }}</p>
+                            <small>{{ last_message.timestamp|timesince }} ที่แล้ว</small>
+                        {% endif %}
+                    {% endwith %}
+                    <a href="{% url 'chat_room' chat.id %}" class="btn btn-primary">ดูการสนทนา</a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>ยังไม่มีการสนทนา</p>
+    {% endif %}
+</div>
+
+<style>
+    .chat-list {
+        max-width: 800px;
+        margin: 20px 0;
+    }
+    
+    .chat-item {
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        background: white;
+    }
+    
+    .last-message {
+        color: #666;
+        margin: 5px 0;
+    }
+</style>
+{% endblock %}

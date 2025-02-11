@@ -17,16 +17,24 @@ class Car(models.Model):
     ]
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    horsepower = models.IntegerField(verbose_name="แรงม้า", default= 0)
-    car_type = models.ForeignKey(CarType, related_name='cars', on_delete=models.CASCADE)  # เพิ่ม related_name ที่นี่
+    horsepower = models.IntegerField(verbose_name="แรงม้า", default=0)
+    car_type = models.ForeignKey(CarType, related_name='cars', on_delete=models.CASCADE) 
     image = models.ImageField(upload_to='cars/', blank=True, null=True, default='default_car.jpg')
-    status = models.CharField(max_length=20, choices=[('Approved', 'Approved'), ('Pending', 'Pending')])
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)  # Owner field
-    is_available = models.BooleanField(default=True)  # สถานะของรถ (พร้อมใช้งานหรือไม่)
-    created_at = models.DateTimeField(auto_now_add=True, null=True) 
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True, 
+        related_name='cars' 
+    )  
+    is_available = models.BooleanField(default=True)  
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+
     def __str__(self):
         return self.name
+
 
 class Schedule(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='schedules')

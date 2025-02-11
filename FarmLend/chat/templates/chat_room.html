@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <h3>{{ room.car.name }}</h3>
+        <p>
+            {% if request.user == room.car.owner %}
+                แชทกับ: {{ other_participant.username }} (ผู้สนใจ)
+            {% else %}
+                แชทกับ: {{ room.car.owner.username }} (เจ้าของรถ)
+            {% endif %}
+        </p>
+    </div>
+
+    <div class="messages-container" id="messages">
+        {% for message in messages %}
+            <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
+                <div class="message-content">
+                    <div class="message-header">
+                        <strong>{{ message.sender.username }}</strong>
+                    </div>
+                    <p>{{ message.content }}</p>
+                    <small>{{ message.timestamp|date:"H:i" }}</small>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <form class="message-form" id="chat-form">
+        <input type="text" id="chat-input" placeholder="พิมพ์ข้อความ..." required>
+        <button type="submit">ส่ง</button>
+    </form>
+</div>
+
+<script>
+    const currentUserId = "{{ request.user.id }}";
+    const chatSocket = new WebSocket(
+        'ws://' + window.location.host + '/ws/chat/{{ room.id }}/'
+    );
+
+    const messagesContainer = document.getElementById('messages');
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+
+    function scrollToBottom() {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    scrollToBottom();
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const messageDiv = document.createElement('div');
+        const isSentByMe = data.sender_id == currentUserId;
+        
+        messageDiv.className = `message ${isSentByMe ? 'sent' : 'received'}`;
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                <div class="message-header">
+                    <strong>${data.sender_name}</strong>
+                </div>
+                <p>${data.message}</p>
+                <small>${data.timestamp}</small>
+            </div>
+        `;
+        
+        messagesContainer.appendChild(messageDiv);
+        scrollToBottom();
+    };
+
+    chatForm.onsubmit = function(e) {
+        e.preventDefault();
+        const message = chatInput.value.trim();
+        if (message) {
+            chatSocket.send(JSON.stringify({
+                'message': message,
+                'sender_id': currentUserId
+            }));
+            chatInput.value = '';
+        }
+    };
+</script>
+
+<style>
+    .chat-container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .chat-header {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .messages-container {
+        height: 500px;
+        overflow-y: auto;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .message {
+        margin-bottom: 15px;
+    }
+
+    .message-content {
+        padding: 10px 15px;
+        border-radius: 15px;
+        max-width: 70%;
+        word-wrap: break-word;
+    }
+
+    .sent {
+        text-align: right;
+    }
+
+    .sent .message-content {
+        background: #007bff;
+        color: white;
+        margin-left: auto;
+    }
+
+    .received .message-content {
+        background: #e9ecef;
+        color: black;
+    }
+
+    .message-header {
+        margin-bottom: 5px;
+    }
+
+    .message-form {
+        display: flex;
+        gap: 10px;
+    }
+
+    .message-form input {
+        flex: 1;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        outline: none;
+    }
+
+    .message-form button {
+        padding: 10px 20px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+    }
+
+    .message-form button:hover {
+        background: #0056b3;
+    }
+</style>
+{% endblock %}
