@@ -15,22 +15,29 @@ class Car(models.Model):
         ('Pending', 'Pending'),
         ('Approved', 'Approved'),
     ]
+
+    PRICING_TYPE_CHOICES = [
+        ('flat', 'ราคาเหมา'),
+        ('per_rai', 'ราคาต่อไร่')
+    ]
+
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     horsepower = models.IntegerField(verbose_name="แรงม้า", default=0)
     car_type = models.ForeignKey(CarType, related_name='cars', on_delete=models.CASCADE) 
     image = models.ImageField(upload_to='cars/', blank=True, null=True, default='default_car.jpg')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
-    
-    owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True, 
-        related_name='cars' 
-    )  
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='cars')    
     is_available = models.BooleanField(default=True)  
     created_at = models.DateTimeField(auto_now_add=True, null=True)
+
+    morning_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="ราคาเหมา ช่วงเช้า")
+    morning_custom_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="ราคาที่กำหนดเอง ช่วงเช้า")
+    afternoon_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="ราคาเหมา ช่วงบ่าย")
+    afternoon_custom_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="ราคาที่กำหนดเอง ช่วงบ่าย")
+
+    price_per_rai = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="ราคาต่อไร่")
+    time_per_rai = models.IntegerField(null=True, blank=True, verbose_name="เวลาทำงานต่อไร่ (นาที)")
 
     def __str__(self):
         return self.name

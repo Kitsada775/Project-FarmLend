@@ -1,48 +1,37 @@
-<!-- templates/owner_chats.html -->
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>การสนทนาของคุณ</h2>
-    
+<div class="container mx-auto max-w-4xl p-6 bg-white rounded-lg shadow-lg">
+    <h2 class="text-2xl font-bold mb-4">💬 การสนทนาของคุณ</h2>
+
     {% if chats %}
-        <div class="chat-list">
+        <div class="space-y-4">
             {% for chat in chats %}
-                <div class="chat-item">
-                    <h4>{{ chat.car.name }}</h4>
-                    <p>ผู้สนใจ: {{ chat.get_other_participant.username }}</p>
+                <div class="p-4 bg-gray-100 rounded-lg shadow-md">
+                    <h4 class="font-semibold text-lg text-gray-800">{{ chat.car.name }}</h4>
+                    <p class="text-gray-600">
+                        {% for participant in chat.participants.all %}
+                            {% if participant != request.user %}
+                                แชทกับ: <span class="font-bold">{{ participant.username }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </p>
+                    
                     {% with last_message=chat.messages.last %}
                         {% if last_message %}
-                            <p class="last-message">ข้อความล่าสุด: {{ last_message.content|truncatechars:50 }}</p>
-                            <small>{{ last_message.timestamp|timesince }} ที่แล้ว</small>
+                            <p class="text-gray-500 text-sm">💬 ข้อความล่าสุด: {{ last_message.content|truncatechars:50 }}</p>
+                            <small class="text-gray-400">{{ last_message.timestamp|timesince }} ที่แล้ว</small>
                         {% endif %}
                     {% endwith %}
-                    <a href="{% url 'chat_room' chat.id %}" class="btn btn-primary">ดูการสนทนา</a>
+                    
+                    <a href="{% url 'chat_room' chat.id %}" class="block mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        🗨️ ดูการสนทนา
+                    </a>
                 </div>
             {% endfor %}
         </div>
     {% else %}
-        <p>ยังไม่มีการสนทนา</p>
+        <p class="text-gray-500 text-center mt-6">⛔ ยังไม่มีการสนทนา</p>
     {% endif %}
 </div>
-
-<style>
-    .chat-list {
-        max-width: 800px;
-        margin: 20px 0;
-    }
-    
-    .chat-item {
-        padding: 15px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        margin-bottom: 15px;
-        background: white;
-    }
-    
-    .last-message {
-        color: #666;
-        margin: 5px 0;
-    }
-</style>
 {% endblock %}

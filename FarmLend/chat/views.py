@@ -5,15 +5,13 @@ from .forms import MessageForm
 from .models import ChatRoom, Car
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
+from django.core.exceptions import PermissionDenied
 
 
 def chatPage(request):
     # ดึงห้องแชททั้งหมด
     chat_rooms = ChatRoom.objects.all()
     return render(request, "chat/chatPage.html", {"chat_rooms": chat_rooms})
-
-
-from django.core.exceptions import PermissionDenied
 
 
 @login_required
@@ -54,11 +52,12 @@ def chat_room(request, room_id):
     
     return render(request, 'chat_room.html', context)
 
-# Add view for car owner's chats
+
 @login_required
-def owner_chats(request):
-    # Get all chat rooms where the user is the car owner
-    chats = ChatRoom.objects.filter(car__owner=request.user)
+def my_chats(request):
+    # ดึงห้องแชททั้งหมดที่ผู้ใช้เป็น participant (ทั้งเจ้าของรถและผู้สนใจ)
+    chats = ChatRoom.objects.filter(participants=request.user).distinct()
+
     return render(request, 'owner_chats.html', {
         'chats': chats
     })

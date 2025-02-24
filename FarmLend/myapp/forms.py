@@ -4,13 +4,27 @@ from .models import Schedule, Car
 from .models import CarReview
 from .models import Review
 
-
-
 class CarForm(forms.ModelForm):
     class Meta:
         model = Car
-        fields = '__all__'
+        fields = [
+            'name', 'description', 'horsepower', 'image', 'is_available',
+            'morning_price', 'morning_custom_price', 'afternoon_price', 'afternoon_custom_price', 'price_per_rai', 'time_per_rai'
+        ]
 
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'horsepower': forms.NumberInput(attrs={'class': 'form-control'}),
+            'image': forms.FileInput(attrs={'class': 'form-control'}),
+            'is_available': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+            'morning_price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'morning_custom_price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'afternoon_price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'afternoon_custom_price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'price_per_rai': forms.NumberInput(attrs={'class': 'form-control'}),
+            'time_per_rai': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
 
 class UserUpdateForm(forms.ModelForm):
     class Meta:

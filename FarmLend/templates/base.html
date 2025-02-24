@@ -44,12 +44,10 @@
                     {% endif %}
 
                     <!-- Owner Chat Access -->
-                    {% if user.cars.exists %}
-                    <a href="{% url 'owner_chats' %}" 
+                    <a href="{% url 'my_chats' %}" 
                        class="flex items-center px-4 py-2 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition duration-200">
                         <i class="fas fa-comments mr-2"></i> การสนทนาของฉัน
                     </a>
-                    {% endif %}
 
                     <!-- Profile Dropdown -->
                     <div class="relative">
@@ -107,12 +105,10 @@
                     <i class="fas fa-users mr-2"></i> ตรวจสอบผู้ใช้งาน
                 </a>
                 {% endif %}
-                {% if user.cars.exists %}
-                <a href="{% url 'owner_chats' %}" 
+                <a href="{% url 'my_chats' %}" 
                    class="block px-3 py-2 text-base font-medium text-white hover:bg-green-700 rounded-md">
                     <i class="fas fa-comments mr-2"></i> การสนทนาของฉัน
                 </a>
-                {% endif %}
                 <a href="{% url 'profile' %}" 
                    class="block px-3 py-2 text-base font-medium text-white hover:bg-green-700 rounded-md">
                     <i class="fas fa-user mr-2"></i> โปรไฟล์ของฉัน

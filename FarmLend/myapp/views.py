@@ -164,19 +164,20 @@ def car_detail_view(request, car_id):
     return render(request, 'car_detail.html', {'car': car})
 
 # ฟังก์ชันเพิ่มรถ
+@login_required
 def add_car(request, type_id):
     car_type = get_object_or_404(CarType, id=type_id)  # ดึงข้อมูลประเภทของรถ
     if request.method == 'POST':
         form = CarForm(request.POST, request.FILES)
         if form.is_valid():
             car = form.save(commit=False)
-            car.car_type = CarType.objects.get(id=request.POST.get('car_type'))  # ใช้ค่า car_type ที่มาจากฟอร์ม
+            car.car_type = car_type  # กำหนด car_type
+            car.owner = request.user  # กำหนด owner เป็นผู้ใช้ที่ล็อกอินอยู่
             car.status = 'Pending'  # ตั้งสถานะเป็น 'Pending' สำหรับการอนุมัติ
             car.save()
-            return redirect('car_list_by_type', type_id=car.car_type.id)  # รีไดเรกไปยังหน้ารายการรถของประเภทนั้น
+            return redirect('car_list_by_type', type_id=car_type.id)  # รีไดเรกไปยังหน้ารายการรถของประเภทนั้น
     else:
         form = CarForm()
-
     return render(request, 'addcar.html', {'form': form, 'car_type': car_type})
 
 
@@ -304,6 +305,7 @@ def profile_view(request):
 
 @login_required
 def edit_profile_view(request):
+    # ตรวจสอบว่าเป็นการเข้าแก้ไขโปรไฟล์ของผู้ใช้ที่ล็อกอิน
     if request.method == 'POST':
         form = UserUpdateForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
@@ -311,8 +313,9 @@ def edit_profile_view(request):
             messages.success(request, 'โปรไฟล์ถูกอัปเดตเรียบร้อยแล้ว!')
             return redirect('profile')
     else:
-        form = UserUpdateForm(instance=request.user)
+        form = UserUpdateForm(instance=request.user)  # โหลดข้อมูลของผู้ใช้ที่ล็อกอิน
     return render(request, 'edit_profile.html', {'form': form})
+
 
 def car_detail_view(request, car_id):
     # ดึงข้อมูลรถตาม car_id

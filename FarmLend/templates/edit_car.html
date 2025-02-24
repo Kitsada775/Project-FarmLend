@@ -1,15 +1,48 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h2 class="text-2xl font-bold mb-6">แก้ไขข้อมูลรถ</h2>
+<div class="max-w-2xl mx-auto bg-blue-50 p-8 rounded-xl shadow-lg">
+    <h2 class="text-3xl font-bold mb-6 text-center text-gray-800">แก้ไขข้อมูลรถ</h2>
 
     <form method="POST">
         {% csrf_token %}
-        <div class="mb-4">
-            {{ form.as_p }}
+        <div class="space-y-6">
+            <div class="mb-4">
+                <label for="name" class="block text-lg font-semibold text-gray-700">ชื่อรถ</label>
+                {{ form.name }}
+            </div>
+
+            <div class="mb-4">
+                <label for="description" class="block text-lg font-semibold text-gray-700">คำอธิบาย</label>
+                {{ form.description }}
+            </div>
+
+            <div class="mb-4">
+                <label for="horsepower" class="block text-lg font-semibold text-gray-700">แรงม้า</label>
+                {{ form.horsepower }}
+            </div>
+
+            <div class="mb-4">
+                <label for="car_type" class="block text-lg font-semibold text-gray-700">ประเภทของรถ</label>
+                {{ form.car_type }}
+            </div>
+
+            <div class="mb-4">
+                <label for="image" class="block text-lg font-semibold text-gray-700">ภาพของรถ</label>
+                {{ form.image }}
+            </div>         
+
+        <div class="flex justify-center gap-4 mt-6">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-md transition duration-300">
+                บันทึกการแก้ไข
+            </button>
         </div>
-        <button type="submit" class="bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600">บันทึกการแก้ไข</button>
     </form>
     
-    <a href="{% url 'car_list_by_type' type_id=car.car_type.id %}" class="text-gray-500 mt-4 inline-block">กลับ</a>
+    <div class="mt-6 text-center">
+        <a href="{% url 'car_list_by_type' type_id=car.car_type.id %}" class="text-gray-600 hover:text-gray-800 font-medium">
+            ⬅ กลับ
+        </a>
+    </div>
+</div>
 {% endblock %}
