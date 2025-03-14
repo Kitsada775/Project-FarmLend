@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My FarmLend{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-green-600 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Logo Section -->
+                <div class="flex items-center">
+                    <a href="{% url 'car_type_list' %}" class="flex items-center">
+                        <i class="fas fa-tractor text-white text-2xl mr-2"></i>
+                        <span class="text-white text-2xl font-bold">FarmLend</span>
+                    </a>
+                </div>
+
+                <!-- Navigation Items -->
+                {% if user.is_authenticated %}
+                <div class="hidden md:flex items-center space-x-4">
+                    <!-- Home -->
+                    <a href="{% url 'car_type_list' %}" 
+                       class="flex items-center px-4 py-2 text-sm text-white bg-green-700 rounded-lg hover:bg-green-800 transition duration-200">
+                        <i class="fas fa-home mr-2"></i> Home
+                    </a>
+
+                    <!-- Notifications -->
+                    <a href="{% url 'notification_list' %}" 
+                       class="flex items-center px-4 py-2 text-sm text-white bg-yellow-500 rounded-lg hover:bg-yellow-600 transition duration-200">
+                        <i class="fas fa-bell mr-2"></i> แจ้งเตือน
+                    </a>
+
+                    <!-- Admin Panel -->
+                    {% if request.user.is_staff %}
+                    <a href="{% url 'user_management' %}" 
+                       class="flex items-center px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-users mr-2"></i> ตรวจสอบผู้ใช้งาน
+                    </a>
+                    
+                    <!-- ปุ่มแสดงรถที่รอการอนุมัติ เฉพาะ ADMIN -->
+                    <a href="{% url 'pending_car_list' %}" 
+                       class="flex items-center px-4 py-2 text-sm text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition duration-200">
+                        <i class="fas fa-clipboard-check mr-2"></i> รถที่รอการอนุมัติ
+                    </a>
+                    {% endif %}
+
+                    <!-- Owner Chat Access -->
+                    <a href="{% url 'my_chats' %}" 
+                       class="flex items-center px-4 py-2 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition duration-200">
+                        <i class="fas fa-comments mr-2"></i> การสนทนาของฉัน
+                    </a>
+
+                    <!-- Profile Dropdown -->
+                    <div class="relative">
+                        <button id="accountMenuButton" 
+                                class="flex items-center px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-200">
+                            <i class="fas fa-user mr-2"></i> บัญชีของฉัน
+                            <i class="fas fa-chevron-down ml-2"></i>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div id="accountMenu" 
+                             class="absolute right-0 w-48 mt-2 py-2 bg-white rounded-lg shadow-xl hidden z-50">
+                            <a href="{% url 'profile' %}" 
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user-circle mr-2"></i> โปรไฟล์ของฉัน
+                            </a>
+                            <a href="{% url 'my_cars' %}" 
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-car mr-2"></i> รถของฉัน
+                            </a>
+                            <div class="border-t border-gray-100"></div>
+                            <a href="{% url 'logout' %}" 
+                               class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                <i class="fas fa-sign-out-alt mr-2"></i> ออกจากระบบ
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button class="mobile-menu-button text-white hover:text-gray-200">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div class="mobile-menu hidden md:hidden">
+            {% if user.is_authenticated %}
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="{% url 'car_type_list' %}" 
+                   class="block px-3 py-2 text-base font-medium text-white hover:bg-green-700 rounded-md">
+                    <i class="fas fa-home mr-2"></i> Home
+                </a>
+                <a href="{% url 'notification_list' %}" 
+                   class="block px-3 py-2 text-base font-medium text-white hover:bg-green-700 rounded-md">
+                    <i class="fas fa-bell mr-2"></i> แจ้งเตือน
+                </a>
+                {% if request.user.is_staff %}
+                <a href="{% url 'user_management' %}" 
+                   class="block px-3 py-2 text-base font-medium text-white hover:bg-green-700 rounded-md">
+                    <i class="fas fa-users mr-2"></i> ตรวจสอบผู้ใช้งาน
+                </a>
+                <!-- ปุ่มแสดงรถที่รอการอนุมัติสำหรับมือถือ เฉพาะ ADMIN -->
+                <a href="{% url 'pending_car_list' %}" 
+                   class="block px-3 py-2 text-base font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-md">
+                    <i class="fas fa-clipboard-check mr-2"></i> รถที่รอการอนุมัติ
+                </a>
+                {% endif %}
+                <a href="{% url 'my_chats' %}" 
+                   class="block px-3 py-2 text-base font-medium text-white hover:bg-green-700 rounded-md">
+                    <i class="fas fa-comments mr-2"></i> การสนทนาของฉัน
+                </a>
+                <a href="{% url 'profile' %}" 
+                   class="block px-3 py-2 text-base font-medium text-white hover:bg-green-700 rounded-md">
+                    <i class="fas fa-user mr-2"></i> โปรไฟล์ของฉัน
+                </a>
+                <a href="{% url 'my_cars' %}" 
+                   class="block px-3 py-2 text-base font-medium text-white hover:bg-green-700 rounded-md">
+                    <i class="fas fa-car mr-2"></i> รถของฉัน
+                </a>
+                <a href="{% url 'logout' %}" 
+                   class="block px-3 py-2 text-base font-medium text-white hover:bg-green-700 rounded-md">
+                    <i class="fas fa-sign-out-alt mr-2"></i> ออกจากระบบ
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Content Block -->
+    <main class="container mx-auto px-4 py-8">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <script>
+        // Profile Dropdown Toggle
+        document.addEventListener("DOMContentLoaded", function () {
+            const menuButton = document.getElementById("accountMenuButton");
+            const dropdownMenu = document.getElementById("accountMenu");
+
+            menuButton.addEventListener("click", function (event) {
+                event.stopPropagation(); // ป้องกัน event bubble
+                dropdownMenu.classList.toggle("hidden");
+            });
+
+            document.addEventListener("click", function (event) {
+                if (!menuButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                    dropdownMenu.classList.add("hidden");
+                }
+            });
+        });
+
+        // Mobile menu toggle
+        document.querySelector('.mobile-menu-button').addEventListener('click', function() {
+            document.querySelector('.mobile-menu').classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>

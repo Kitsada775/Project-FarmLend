@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เพิ่มรถใหม่</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden my-10">
+        <!-- หัวข้อหลัก -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 py-6 px-8">
+            <h2 class="text-3xl font-bold text-white">เพิ่มรถใหม่</h2>
+            <p class="text-blue-100 mt-2">กรอกข้อมูลรถของคุณเพื่อลงทะเบียนในระบบ</p>
+        </div>
+
+        <!-- แบบฟอร์ม -->
+        <div class="p-8">
+            <!-- การแสดงข้อผิดพลาด -->
+            <div id="errors" class="mb-6 {% if form.errors %} bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg {% else %} hidden {% endif %}">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <strong>กรุณาตรวจสอบข้อมูลที่กรอก!</strong>
+                </div>
+                <ul class="mt-3 list-disc list-inside space-y-1" id="error-list">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li class="text-sm">{{ field }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Django Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="mb-6 bg-{{ message.tags }}-50 border-l-4 border-{{ message.tags }}-500 text-{{ message.tags }}-700 p-4 rounded-lg">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form id="add-car-form" action="{% url 'addcar' type_id=car_type.id %}" method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- ข้อมูลทั่วไป -->
+                <div class="bg-gray-50 p-5 rounded-xl">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>ข้อมูลทั่วไป
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2" for="{{ form.name.id_for_label }}">ชื่อรถ</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-red-500 text-sm mt-1">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2" for="{{ form.horsepower.id_for_label }}">แรงม้า</label>
+                            {{ form.horsepower }}
+                            {% if form.horsepower.errors %}
+                                <div class="text-red-500 text-sm mt-1">{{ form.horsepower.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-gray-700 font-medium mb-2" for="{{ form.description.id_for_label }}">คำอธิบาย</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-red-500 text-sm mt-1">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- รูปภาพ -->
+                <div class="bg-gray-50 p-5 rounded-xl">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-image text-blue-600 mr-2"></i>รูปภาพ
+                    </h3>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-all cursor-pointer">
+                        {{ form.image }}
+                        <label for="{{ form.image.id_for_label }}" class="cursor-pointer">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                            <div class="text-gray-600">ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์</div>
+                            <p class="text-xs text-gray-500 mt-1">รองรับ JPG, PNG หรือ GIF (สูงสุด 5MB)</p>
+                        </label>
+                    </div>
+                    {% if form.image.errors %}
+                        <div class="text-red-500 text-sm mt-1">{{ form.image.errors }}</div>
+                    {% endif %}
+                    <div id="image-preview" class="mt-4 hidden">
+                        <div class="flex items-center">
+                            <img id="preview-img" src="" alt="ภาพตัวอย่าง" class="w-24 h-24 object-cover rounded-lg border">
+                            <div class="ml-4">
+                                <p id="file-name" class="text-sm font-medium"></p>
+                                <button type="button" id="remove-image" class="text-sm text-red-600 hover:text-red-800">
+                                    <i class="fas fa-trash-alt mr-1"></i>ลบรูปภาพ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ราคา -->
+                <div class="bg-gray-50 p-5 rounded-xl">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-money-bill-wave text-blue-600 mr-2"></i>ข้อมูลราคา
+                    </h3>
+
+                    <!-- ช่วงเช้า -->
+                    <div class="mb-6 p-4 border border-gray-200 rounded-lg">
+                        <h4 class="font-medium text-gray-800 mb-3">ช่วงเช้า</h4>
+                        <div class="mb-3">
+                            <select name="morning_pricing_type" id="morning_pricing_type" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                <option value="flat">ราคาเหมา</option>
+                                <option value="contact">ติดต่อเจ้าของรถ</option>
+                            </select>
+                        </div>
+                        <div id="morning_flat_price">
+                            <label class="block text-gray-700 font-medium mb-2" for="{{ form.morning_price.id_for_label }}">ราคาเหมา (บาท)</label>
+                            {{ form.morning_price }}
+                            {% if form.morning_price.errors %}
+                                <div class="text-red-500 text-sm mt-1">{{ form.morning_price.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div id="morning_contact_price" class="hidden">
+                            <div class="p-3 bg-blue-50 rounded-lg text-blue-700 flex items-start">
+                                <i class="fas fa-info-circle mt-1 mr-2"></i>
+                                <p>ลูกค้าจะต้องติดต่อคุณโดยตรงเพื่อสอบถามราคา</p>
+                            </div>
+                            {{ form.morning_contact }}
+                        </div>
+                    </div>
+
+                    <!-- ช่วงบ่าย -->
+                    <div class="mb-6 p-4 border border-gray-200 rounded-lg">
+                        <h4 class="font-medium text-gray-800 mb-3">ช่วงบ่าย</h4>
+                        <div class="mb-3">
+                            <select name="afternoon_pricing_type" id="afternoon_pricing_type" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                <option value="flat">ราคาเหมา</option>
+                                <option value="contact">ติดต่อเจ้าของรถ</option>
+                            </select>
+                        </div>
+                        <div id="afternoon_flat_price">
+                            <label class="block text-gray-700 font-medium mb-2" for="{{ form.afternoon_price.id_for_label }}">ราคาเหมา (บาท)</label>
+                            {{ form.afternoon_price }}
+                            {% if form.afternoon_price.errors %}
+                                <div class="text-red-500 text-sm mt-1">{{ form.afternoon_price.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div id="afternoon_contact_price" class="hidden">
+                            <div class="p-3 bg-blue-50 rounded-lg text-blue-700 flex items-start">
+                                <i class="fas fa-info-circle mt-1 mr-2"></i>
+                                <p>ลูกค้าจะต้องติดต่อคุณโดยตรงเพื่อสอบถามราคา</p>
+                            </div>
+                            {{ form.afternoon_contact }}
+                        </div>
+                    </div>
+
+                    <!-- ราคาต่อไร่ -->
+                    <div class="p-4 border border-gray-200 rounded-lg">
+                        <h4 class="font-medium text-gray-800 mb-3">ราคาต่อไร่</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2" for="{{ form.price_per_rai.id_for_label }}">ราคาต่อไร่ (บาท)</label>
+                                {{ form.price_per_rai }}
+                                {% if form.price_per_rai.errors %}
+                                    <div class="text-red-500 text-sm mt-1">{{ form.price_per_rai.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2" for="{{ form.time_per_rai.id_for_label }}">เวลาทำงานต่อไร่ (นาที)</label>
+                                {{ form.time_per_rai }}
+                                {% if form.time_per_rai.errors %}
+                                    <div class="text-red-500 text-sm mt-1">{{ form.time_per_rai.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ปุ่มบันทึก -->
+                <div class="flex justify-end space-x-4 mt-8">
+                    <button type="button" id="reset-form" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all">
+                        <i class="fas fa-redo mr-2"></i>ล้างข้อมูล
+                    </button>
+                    <button type="submit" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg hover:from-blue-700 hover:to-blue-900 transition-all">
+                        <i class="fas fa-save mr-2"></i>บันทึกข้อมูลรถ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // ฟังก์ชันสำหรับจัดการการแสดงผลฟิลด์ราคา
+            let morningPricingTypeField = document.getElementById('morning_pricing_type');
+            let morningFlatPriceField = document.getElementById('morning_flat_price');
+            let morningContactPriceField = document.getElementById('morning_contact_price');
+            let morningPriceInput = document.getElementById('{{ form.morning_price.id_for_label }}');
+            let morningContactField = document.getElementById('{{ form.morning_contact.id_for_label }}');
+
+            let afternoonPricingTypeField = document.getElementById('afternoon_pricing_type');
+            let afternoonFlatPriceField = document.getElementById('afternoon_flat_price');
+            let afternoonContactPriceField = document.getElementById('afternoon_contact_price');
+            let afternoonPriceInput = document.getElementById('{{ form.afternoon_price.id_for_label }}');
+            let afternoonContactField = document.getElementById('{{ form.afternoon_contact.id_for_label }}');
+
+            // อัพโหลดรูปภาพ
+            const imageInput = document.getElementById('{{ form.image.id_for_label }}');
+            const previewImg = document.getElementById('preview-img');
+            const imagePreview = document.getElementById('image-preview');
+            const fileName = document.getElementById('file-name');
+            const removeImageBtn = document.getElementById('remove-image');
+            const errorsDiv = document.getElementById('errors');
+            const errorList = document.getElementById('error-list');
+
+            // ตั้งค่าสไตล์ให้กับ Django form fields
+            // จัดการแนบสไตล์ให้กับฟิลด์จาก Django form
+            const djangoFormFields = document.querySelectorAll('input[type="text"], input[type="number"], textarea, input[type="file"]');
+            djangoFormFields.forEach(field => {
+                if (field.id === '{{ form.image.id_for_label }}') {
+                    field.className = 'hidden';
+                } else if (field.type === 'number') {
+                    if (field.id === '{{ form.morning_price.id_for_label }}' || 
+                        field.id === '{{ form.afternoon_price.id_for_label }}' || 
+                        field.id === '{{ form.price_per_rai.id_for_label }}') {
+                        field.className = 'w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all';
+                    } else {
+                        field.className = 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all';
+                    }
+                } else if (field.tagName === 'TEXTAREA') {
+                    field.className = 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all';
+                    field.rows = 3;
+                    field.placeholder = 'รายละเอียดเพิ่มเติมเกี่ยวกับรถ';
+                } else {
+                    field.className = 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all';
+                }
+            });
+            
+            // เพิ่ม placeholder
+            document.getElementById('{{ form.name.id_for_label }}').placeholder = 'ระบุชื่อรถ';
+            document.getElementById('{{ form.horsepower.id_for_label }}').placeholder = 'ระบุแรงม้า';
+            document.getElementById('{{ form.morning_price.id_for_label }}').placeholder = '0.00';
+            document.getElementById('{{ form.afternoon_price.id_for_label }}').placeholder = '0.00';
+            document.getElementById('{{ form.price_per_rai.id_for_label }}').placeholder = '0.00';
+            document.getElementById('{{ form.time_per_rai.id_for_label }}').placeholder = '0';
+
+            // สลับการแสดงผลฟิลด์ราคาช่วงเช้า
+            function toggleMorningPricingFields() {
+                if (morningPricingTypeField.value === 'flat') {
+                    morningFlatPriceField.classList.remove('hidden');
+                    morningContactPriceField.classList.add('hidden');
+                    morningPriceInput.required = true;
+                    morningContactField.checked = false;
+                } else {
+                    morningFlatPriceField.classList.add('hidden');
+                    morningContactPriceField.classList.remove('hidden');
+                    morningPriceInput.required = false;
+                    morningPriceInput.value = '';
+                    morningContactField.checked = true;
+                }
+            }
+
+            // สลับการแสดงผลฟิลด์ราคาช่วงบ่าย
+            function toggleAfternoonPricingFields() {
+                if (afternoonPricingTypeField.value === 'flat') {
+                    afternoonFlatPriceField.classList.remove('hidden');
+                    afternoonContactPriceField.classList.add('hidden');
+                    afternoonPriceInput.required = true;
+                    afternoonContactField.checked = false;
+                } else {
+                    afternoonFlatPriceField.classList.add('hidden');
+                    afternoonContactPriceField.classList.remove('hidden');
+                    afternoonPriceInput.required = false;
+                    afternoonPriceInput.value = '';
+                    afternoonContactField.checked = true;
+                }
+            }
+
+            // จัดการการแสดงตัวอย่างรูปภาพ
+            imageInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    // ตรวจสอบประเภทไฟล์
+                    const fileType = file.type;
+                    if (!fileType.startsWith('image/')) {
+                        alert('กรุณาอัพโหลดไฟล์รูปภาพเท่านั้น');
+                        this.value = '';
+                        return;
+                    }
+
+                    // ตรวจสอบขนาดไฟล์ (5MB = 5 * 1024 * 1024)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('ขนาดไฟล์เกิน 5MB กรุณาเลือกไฟล์ขนาดเล็กลง');
+                        this.value = '';
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        imagePreview.classList.remove('hidden');
+                        fileName.textContent = file.name;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // ลบรูปภาพ
+            removeImageBtn.addEventListener('click', function() {
+                imageInput.value = '';
+                imagePreview.classList.add('hidden');
+                previewImg.src = '';
+                fileName.textContent = '';
+            });
+
+            // ปุ่มล้างข้อมูล
+            document.getElementById('reset-form').addEventListener('click', function() {
+                document.getElementById('add-car-form').reset();
+                imagePreview.classList.add('hidden');
+                previewImg.src = '';
+                fileName.textContent = '';
+                toggleMorningPricingFields();
+                toggleAfternoonPricingFields();
+                errorsDiv.classList.add('hidden');
+                errorList.innerHTML = '';
+            });
+
+            // Event listeners
+            morningPricingTypeField.addEventListener('change', toggleMorningPricingFields);
+            afternoonPricingTypeField.addEventListener('change', toggleAfternoonPricingFields);
+
+            // เริ่มต้นด้วยค่าเริ่มต้น
+            toggleMorningPricingFields();
+            toggleAfternoonPricingFields();
+
+            // เพิ่ม Debug สำหรับการส่งฟอร์ม
+            document.getElementById('add-car-form').addEventListener('submit', function(e) {
+                console.log('กำลังส่งฟอร์ม...');
+                // ไม่ต้อง preventDefault เพื่อให้ฟอร์มส่งตามปกติ
+            });
+        });
+    </script>
+</body>
+</html>

@@ -40,8 +40,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "channels" ,
     "chat",
-    "myapp",    "crispy_forms",
+    "myapp",
     "crispy_tailwind",
+    "crispy_forms",
 ]
 CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
 
@@ -56,7 +57,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "FarmLend.urls"
+ROOT_URLCONF = "FARMLEND.urls"
 
 TEMPLATES = [
     {
@@ -76,7 +77,7 @@ TEMPLATES = [
 AUTH_USER_MODEL = 'myapp.CustomUser'
 
 WSGI_APPLICATION = "FarmLend.wsgi.application"
-ASGI_APPLICATION = "FarmLend.asgi.application"
+ASGI_APPLICATION = "FARMLEND.asgi.application"
 
 
 # Database

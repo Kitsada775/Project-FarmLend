@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รีวิวรถ | {{ car.name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-br from-gray-50 to-gray-200 flex items-center justify-center min-h-screen px-4 py-12 font-sans">
+
+    <div class="bg-white shadow-xl rounded-2xl p-8 max-w-2xl w-full border border-gray-100">
+        <!-- หัวข้อและรูปภาพ -->
+        <div class="flex flex-col items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center">รีวิวรถ: {{ car.name }}</h1>
+            <div class="w-20 h-1 bg-blue-500 rounded-full mb-4"></div>
+            {% if car.image %}
+            <div class="rounded-lg overflow-hidden shadow-md mb-4">
+                <img src="{{ car.image.url }}" alt="{{ car.name }}" class="w-full h-48 object-cover">
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- แสดงรีวิวทั้งหมด -->
+        <div class="space-y-5 mb-8">
+            <h2 class="text-xl font-semibold text-gray-700 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd" />
+                </svg>
+                รีวิวจากผู้ใช้
+            </h2>
+            
+            {% for review in reviews %}
+                <div class="bg-gray-50 p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow border-l-4 border-blue-500">
+                    <div class="flex items-center mb-2">
+                        <div class="bg-blue-100 rounded-full p-2 mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <p class="text-gray-800 font-semibold">{{ review.user.username }}</p>
+                        <div class="ml-auto text-gray-500 text-sm">{{ review.created_at|date:"d M Y" }}</div>
+                    </div>
+                    <p class="text-gray-600 mb-3">{{ review.review_text }}</p>
+                    <div class="flex items-center">
+                        <div class="text-yellow-400 font-bold">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= review.rating %}
+                                    <span>★</span>
+                                {% else %}
+                                    <span class="text-gray-300">★</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="ml-2 text-gray-700">{{ review.rating }}/5</span>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="bg-blue-50 p-6 rounded-lg border border-blue-100 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-blue-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <p class="text-gray-600">ยังไม่มีรีวิวสำหรับรถคันนี้</p>
+                    <p class="text-blue-500 mt-2">เป็นคนแรกที่แสดงความคิดเห็น!</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- ฟอร์มเพิ่มรีวิว -->
+        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                </svg>
+                เพิ่มรีวิวของคุณ
+            </h2>
+            <form method="POST" class="space-y-5">
+                {% csrf_token %}
+                <div>
+                    <label for="review_text" class="block text-sm font-medium text-gray-700 mb-1">ข้อความรีวิว:</label>
+                    <textarea name="review_text" id="review_text" rows="4"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all resize-none"
+                        placeholder="บอกเล่าประสบการณ์การใช้งานรถคันนี้..."></textarea>
+                </div>
+
+                <div>
+                    <label for="rating" class="block text-sm font-medium text-gray-700 mb-1">คะแนน:</label>
+                    <div class="relative">
+                        <select name="rating" id="rating"
+                            class="appearance-none w-full bg-white border border-gray-300 p-3 rounded-lg pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all">
+                            <option value="1">⭐ 1 - แย่มาก</option>
+                            <option value="2">⭐⭐ 2 - ค่อนข้างแย่</option>
+                            <option value="3" selected>⭐⭐⭐ 3 - ปานกลาง</option>
+                            <option value="4">⭐⭐⭐⭐ 4 - ดี</option>
+                            <option value="5">⭐⭐⭐⭐⭐ 5 - ดีเยี่ยม</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-blue-500 hover:bg-blue-600 transition-all text-white font-semibold py-3 px-6 rounded-lg shadow-md flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                    </svg>
+                    เพิ่มรีวิว
+                </button>
+            </form>
+        </div>
+
+        <!-- ปุ่มกลับ -->
+        <div class="mt-8 text-center">
+            <a href="{% url 'car_detail' car.id %}"
+                class="inline-flex items-center text-blue-500 hover:text-blue-700 transition-colors font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                </svg>
+                กลับไปที่หน้ารายละเอียดของรถ
+            </a>
+        </div>
+    </div>
+
+</body>
+
+</html>

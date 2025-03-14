@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}การแจ้งเตือน{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- ส่วนหัว -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+        <div class="flex flex-wrap gap-3">
+            <a href="{% url 'car_type_list' %}" 
+               class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-300 shadow-md">
+                <i class="fas fa-arrow-left mr-2"></i>
+                กลับ
+            </a>
+            
+            <a href="/my_reservations/" 
+               class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md">
+                <i class="fas fa-calendar-alt mr-2"></i>
+                ตรวจสอบการจองของฉัน
+            </a>
+        </div>
+    </div>
+
+    <!-- เนื้อหาหลัก -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8 flex items-center justify-center">
+            <i class="fas fa-bell text-yellow-500 mr-3 animate-bounce"></i>
+            การแจ้งเตือนของคุณ
+        </h1>
+        
+        <div class="space-y-6">
+            {% if grouped_notifications %}
+                {% for group in grouped_notifications %}
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-[1.02] transition-all duration-300">
+                        <div class="p-6 bg-gradient-to-r from-white to-gray-50">
+                            {% if group.car %}
+                                <h3 class="text-gray-800 font-medium mb-3">การจองรถ: {{ group.car.name }} วันที่: {{ group.date }}</h3>
+                            {% else %}
+                                <h3 class="text-gray-800 font-medium mb-3">การแจ้งเตือนทั่วไป</h3>
+                            {% endif %}
+                            
+                            {% for notification in group.notifications %}
+                                <div class="flex items-start justify-between mb-4">
+                                    <p class="text-gray-800 font-medium">{{ notification.message }}</p>
+                                    <span class="text-gray-500 text-sm whitespace-nowrap ml-4 bg-gray-100 px-3 py-1 rounded-full">
+                                        <i class="far fa-clock mr-1"></i>
+                                        {{ notification.timestamp }}
+                                    </span>
+                                </div>
+                                {% if notification.schedule %}
+                                    <div class="flex space-x-2">
+                                        {% if not notification.is_confirmed %}
+                                            {% if user == notification.schedule.car.owner %}
+                                                <!-- เจ้าของรถจะเห็นปุ่มอนุมัติและปฏิเสธ -->
+                                                <form method="post" action="{% url 'confirm_reservation' notification.schedule.id %}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="approve">
+                                                    <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-300 shadow-md">
+                                                        อนุมัติ
+                                                    </button>
+                                                </form>
+                                                <form method="post" action="{% url 'confirm_reservation' notification.schedule.id %}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="reject">
+                                                    <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-300 shadow-md">
+                                                        ปฏิเสธ
+                                                    </button>
+                                                </form>
+                                            {% else %}
+                                                <!-- สำหรับผู้จองจะแสดงข้อความ "รอการอนุมัติ" -->
+                                                <p class="text-yellow-500 font-medium">รอการอนุมัติ</p>
+                                            {% endif %}
+                                        {% elif notification.is_approved %}
+                                            <!-- เจ้าของรถอนุมัติ -->
+                                            <p class="text-green-500 font-medium">การจองสำเร็จ</p>
+                                        {% else %}
+                                            <!-- เจ้าของรถปฏิเสธ -->
+                                            <p class="text-red-500 font-medium">การจองถูกปฏิเสธ</p>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-10">
+                    <p class="text-gray-500">ไม่มีการแจ้งเตือนในขณะนี้</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

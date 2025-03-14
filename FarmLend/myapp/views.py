@@ -1,87 +1,21 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import *
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse, HttpResponse
 from django.urls import reverse
-from .forms import CarForm, UserUpdateForm
 from django.contrib.auth.decorators import user_passes_test, login_required
-from django.http import JsonResponse
-from .models import Car, Notification, Schedule
-from datetime import datetime
 from django.contrib.admin.views.decorators import staff_member_required
-from myapp.models import CustomUser
 from django.db.models import Q
-from .models import Car, Review
-from .forms import ReviewForm
 
+from .models import Car, CarType, Schedule, Notification, CarReview, CustomUser
+from .forms import CarForm, UserUpdateForm, ReviewForm
 
 import os
 import pdfkit
-from django.http import HttpResponse
-
-# กำหนด path ของ wkhtmltopdf (Windows ใช้ path นี้, Linux/Mac อาจไม่ต้อง)
-PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
-
-def app_to_pdf(request, app_name):
-    app_path = os.path.join(settings.BASE_DIR, app_name)
-    pdf_filename = f"{app_name}.pdf"
-
-    if not os.path.exists(app_path):
-        return HttpResponse("App not found", status=404)
-
-    html_content = f"<h1>Source Code of App: {app_name}</h1>"
-
-    for root, dirs, files in os.walk(app_path):
-        for file in files:
-            if file.endswith((".py", ".html", ".css", ".js")):  # แปลงเฉพาะไฟล์ที่ต้องการ
-                file_path = os.path.join(root, file)
-                with open(file_path, "r", encoding="utf-8") as f:  # ✅ อ่านไฟล์เป็น UTF-8
-                    html_content += f"<h2>{file}</h2><pre>{f.read()}</pre>"
-
-    # ✅ ใช้ pdfkit พร้อมกำหนดให้ใช้ encoding UTF-8
-    options = {'encoding': 'UTF-8'}
-    pdfkit.from_string(html_content, pdf_filename, configuration=PDFKIT_CONFIG, options=options)
-
-    with open(pdf_filename, "rb") as pdf:
-        response = HttpResponse(pdf.read(), content_type="application/pdf")
-        response["Content-Disposition"] = f'attachment; filename="{pdf_filename}"'
-        return response
+from datetime import datetime
 
 
-@staff_member_required  # ให้เฉพาะแอดมินเข้าถึงได้
-def user_management(request):
-    users = User.objects.all()
-    return render(request, 'user_management.html', {'users': users})
-
-@staff_member_required
-def delete_user(request, user_id):
-    user = get_object_or_404(User, id=user_id)
-
-    if user.is_staff:
-        messages.error(request, "ไม่สามารถลบผู้ดูแลระบบได้")
-    else:
-        user.delete()
-        messages.success(request, "ลบผู้ใช้งานเรียบร้อยแล้ว")
-
-    return redirect('user_management')
-
-
-# ฟังก์ชันสำหรับหน้าแรก
-def welcome_view(request):
-    """
-    แสดงหน้า Welcome (หน้าแรกของระบบ)
-    """
-    return render(request, 'welcome.html')
-
-# ฟังก์ชันสำหรับหน้าล็อกอิน
 def login_view(request):
-    """
-    จัดการการเข้าสู่ระบบของผู้ใช้:
-    - รับ username และ password
-    - ตรวจสอบว่าถูกต้องหรือไม่
-    - หากสำเร็จ จะเปลี่ยนไปยังหน้า car_type_list
-    """
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
@@ -91,17 +25,10 @@ def login_view(request):
             return redirect('car_type_list')
         else:
             messages.error(request, 'Invalid username or password')
-
     return render(request, 'login.html')
 
-# ฟังก์ชันสำหรับหน้าสมัคร
+
 def register_view(request):
-    """
-    สมัครสมาชิกใหม่:
-    - ตรวจสอบความถูกต้องของข้อมูล
-    - สร้างผู้ใช้ใหม่
-    - ส่งข้อความแจ้งเตือนความสำเร็จหรือข้อผิดพลาด
-    """
     if request.method == 'POST':
         username = request.POST['username']
         email = request.POST['email']
@@ -119,78 +46,136 @@ def register_view(request):
                 return redirect('login')
         else:
             messages.error(request, 'Passwords do not match')
-
     return render(request, 'register.html')
 
-# ฟังก์ชันสำหรับการล็อกเอาท์
+
 def logout_view(request):
-    """
-    ออกจากระบบ:
-    - เคลียร์ session ของผู้ใช้
-    """
     logout(request)
     return redirect('login')
 
-# ฟังก์ชันแสดงรายการประเภทของรถ
+
+@login_required
+def profile_view(request):
+    return render(request, 'profile.html', {'user': request.user})
+
+
+@login_required
+def edit_profile_view(request):
+    if request.method == 'POST':
+        form = UserUpdateForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'โปรไฟล์ถูกอัปเดตเรียบร้อยแล้ว!')
+            return redirect('profile')
+    else:
+        form = UserUpdateForm(instance=request.user) 
+    return render(request, 'edit_profile.html', {'form': form})
+
+
+@staff_member_required 
+def user_management(request):
+    users = CustomUser.objects.all()
+    return render(request, 'user_management.html', {'users': users})
+
+
+@staff_member_required
+def delete_user(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id) 
+    if user.is_staff:
+        messages.error(request, "ไม่สามารถลบผู้ดูแลระบบได้")
+    else:
+        user.delete()
+        messages.success(request, "ลบผู้ใช้งานเรียบร้อยแล้ว")
+    return redirect('user_management')
+
+
+def is_admin(user):
+    return user.is_staff
+
+
+@user_passes_test(is_admin)
+def car_pending_list(request, template_name='pending_car_list.html'):
+    pending_cars = Car.objects.filter(status='Pending')
+    return render(request, template_name, {'cars': pending_cars})
+
+
+@user_passes_test(is_admin)
+def approve_car(request, car_id):
+    car = get_object_or_404(Car, id=car_id)
+    car.status = 'Approved'
+    car.save()
+    messages.success(request, "รถได้รับการอนุมัติเรียบร้อยแล้ว!")
+    return redirect('car_list_by_type', type_id=car.car_type.id)
+
+
+def welcome_view(request):
+    return render(request, 'welcome.html')
+
+
 def car_type_list_view(request):
-    """
-    แสดงรายการประเภทของรถ
-    """
     car_types = CarType.objects.all()
     return render(request, 'car_type_list.html', {'car_types': car_types})
 
-# ฟังก์ชันแสดงรายการรถ
+
 def car_list_view(request):
     cars = Car.objects.all()
     return render(request, 'car_list.html', {'cars': cars})
 
-# ฟังก์ชันแสดงรถในแต่ละประเภท
+
 def car_list_by_type(request, type_id):
-    """
-    แสดงรายการรถที่อยู่ในประเภทที่กำหนด
-    """
-    cars = Car.objects.filter(
-        car_type_id=type_id, 
-        status='Approved'
-    ).exclude(image__isnull=True).exclude(image='')  # กรองรถที่ไม่มีไฟล์ภาพ
-    return render(request, 'car_list.html', {'cars': cars, 'car_type': get_object_or_404(CarType, id=type_id)})
+    car_type = get_object_or_404(CarType, id=type_id)
+    cars = Car.objects.filter(car_type=car_type, status='Approved').exclude(image__isnull=True, image='')
+    return render(request, 'car_list.html', {'cars': cars, 'car_type': car_type})
 
-# ฟังก์ชันแสดงรายละเอียดของรถแต่ละคัน
+
+
 def car_detail_view(request, car_id):
-    """
-    แสดงรายละเอียดของรถแต่ละคัน
-    """
-    car = get_object_or_404(Car, pk=car_id)
-    return render(request, 'car_detail.html', {'car': car})
+    car = get_object_or_404(Car, id=car_id)
+    owner = car.owner  
+    context = {
+        'car': car,
+        'owner': owner, 
+    }
+    return render(request, 'car_detail.html', context)
 
-# ฟังก์ชันเพิ่มรถ
+
+@login_required
+def my_cars(request):
+    cars = Car.objects.filter(owner=request.user)
+    if not cars:
+        messages.info(request, "คุณยังไม่มีรถในระบบ")
+    return render(request, 'my_cars.html', {'cars': cars})
+
+
 @login_required
 def add_car(request, type_id):
-    car_type = get_object_or_404(CarType, id=type_id)  # ดึงข้อมูลประเภทของรถ
+    car_type = get_object_or_404(CarType, id=type_id)
     if request.method == 'POST':
         form = CarForm(request.POST, request.FILES)
         if form.is_valid():
             car = form.save(commit=False)
-            car.car_type = car_type  # กำหนด car_type
-            car.owner = request.user  # กำหนด owner เป็นผู้ใช้ที่ล็อกอินอยู่
-            car.status = 'Pending'  # ตั้งสถานะเป็น 'Pending' สำหรับการอนุมัติ
+            car.car_type = car_type
+            car.owner = request.user
+            car.status = 'Pending'
             car.save()
-            return redirect('car_list_by_type', type_id=car_type.id)  # รีไดเรกไปยังหน้ารายการรถของประเภทนั้น
+            messages.success(request, "รถของคุณถูกเพิ่มเรียบร้อยแล้ว! กรุณารอการอนุมัติ")
+            return redirect('my_cars')
+        else:
+            # การแสดงข้อผิดพลาดใน log
+            print(form.errors)
+            messages.error(request, "กรุณาตรวจสอบข้อมูลที่กรอกให้ครบถ้วน")
     else:
         form = CarForm()
+    
     return render(request, 'addcar.html', {'form': form, 'car_type': car_type})
 
 
-# ฟังก์ชันแก้ไขรถ
-from django.shortcuts import redirect
 
 @login_required
 def edicar(request, id, type_id):
     car = get_object_or_404(Car, id=id)
-
     if request.user != car.owner and not request.user.is_staff:
         return HttpResponseForbidden("คุณไม่มีสิทธิ์ในการแก้ไขรถคันนี้")
-
     if request.method == 'POST':
         form = CarForm(request.POST, instance=car)
         if form.is_valid():
@@ -199,35 +184,47 @@ def edicar(request, id, type_id):
             return redirect('car_list_by_type', type_id=type_id)
     else:
         form = CarForm(instance=car)
-
     return render(request, 'edit_car.html', {'form': form, 'car': car})
 
 
-# ฟังก์ชันลบรถ
 @login_required
-def delcar(request, car_id, type_id):
+def delete_car(request, car_id, type_id=None, json_response=False):
     car = get_object_or_404(Car, id=car_id)
-
-    # ตรวจสอบว่าเจ้าของรถหรือแอดมินหรือไม่
     if request.user != car.owner and not request.user.is_staff:
-        return HttpResponseForbidden("คุณไม่มีสิทธิ์ในการลบรถคันนี้")
+        if json_response:
+            return JsonResponse({'success': False, 'error': "คุณไม่มีสิทธิ์ลบรถคันนี้"}, status=403)
+        messages.error(request, "คุณไม่มีสิทธิ์ลบรถคันนี้")
+        return redirect('car_list')
 
-    # ถ้าเจ้าของหรือแอดมิน ยืนยันการลบ
+    car_type_id = car.car_type.id
     car.delete()
-    return redirect('car_list')  # เปลี่ยนไปหน้าแสดงรายการรถ
 
-# ฟังก์ชันแสดงตารางงานของรถ
+    if json_response:
+        return JsonResponse({'success': True, 'redirect_url': f'/cars/type/{car_type_id}/'})
+    return redirect('car_list_by_type', type_id=type_id) if type_id else redirect('car_list')
+
+
+def toggle_car_status(request, car_id):
+    car = get_object_or_404(Car, id=car_id)
+    if car.owner == request.user:
+        car.is_available = not car.is_available
+        car.save()
+    return redirect('car_detail', car_id=car.id)
+
+
+@login_required
 def car_schedule(request, car_id):
-    # กรองรายการที่ได้รับการยืนยันแล้ว
-    schedules = Schedule.objects.filter(car_id=car_id, is_booked=True)
+    car = get_object_or_404(Car, id=car_id)
+    schedules = Schedule.objects.filter(car=car).order_by('-date')
+    
+    return render(request, 'car_schedule.html', {'car': car, 'schedules': schedules})
 
-    return render(request, 'car_schedule.html', {'schedules': schedules})
+
 
 def confirm_selection(request):
     selected_date = request.GET.get('date')
     selected_time = request.GET.get('time')
     car_id = request.GET.get('car_id')
-
     if selected_date and selected_time and car_id:
         car = Car.objects.get(id=car_id)
         return render(request, 'confirm_selection.html', {
@@ -239,237 +236,125 @@ def confirm_selection(request):
         return render(request, 'error.html', {'message': 'ข้อมูลไม่ครบถ้วน'})
 
 
-# แสดงรายการรถที่รอการอนุมัติ
-def car_approval_list(request):
-    # ดึงเฉพาะรถที่รอการอนุมัติ
-    cars_pending = Car.objects.filter(status='Pending')
-
-    # ส่งข้อมูล car_type ไปพร้อมกับ cars
-    return render(request, 'car_approval_list.html', {'cars': cars_pending})
-
-
-# ฟังก์ชันสำหรับอนุมัติรถ
-def approve_car(request, car_id):
-    if not request.user.is_staff:
-        return redirect('car_type_list')
-
-    car = get_object_or_404(Car, id=car_id)
-    car.status = 'Approved'  # อัปเดตสถานะเป็น Approved
-    car.save()  # บันทึกการเปลี่ยนแปลง
-    return redirect('car_list_by_type', type_id=car.car_type.id)  # กลับไปหน้ารายการรถ
-
-# แสดงรายการรถที่อนุมัติแล้ว
-def car_list_by_type_view(request, type_id):
-    # ดึงข้อมูล CarType โดยใช้ type_id
-    car_type = get_object_or_404(CarType, id=type_id)
-    
-    # ใช้ car_type.cars.all() เพื่อดึงรถทั้งหมดที่เกี่ยวข้องกับ car_type นี้
-    cars = car_type.cars.filter(status='Approved').exclude(image__isnull=True).exclude(image='')
-
-    return render(request, 'car_list.html', {'cars': cars, 'car_type': car_type})
-
-
-
-def pending_car_list(request):
-    cars = Car.objects.filter(status='Pending').exclude(image__isnull=True).exclude(image='')
-    return render(request, 'pending_cars.html', {'cars': cars})
-
-# เช็คว่า user เป็น staff (admin) หรือไม่
-def is_admin(user):
-    return user.is_staff
-
-@user_passes_test(is_admin)
-def pending_car_list(request):
-    pending_cars = Car.objects.filter(status='Pending')  # รถที่ยังไม่ได้อนุมัติ
-    return render(request, 'pending_car_list.html', {'cars': pending_cars})
-
-
-@login_required
-def delete_car(request, car_id):
-    car = get_object_or_404(Car, id=car_id)
-
-    # ตรวจสอบว่าเป็นเจ้าของรถหรือเป็นแอดมิน
-    if request.user != car.owner and not request.user.is_staff:
-        return JsonResponse({'success': False, 'error': "คุณไม่มีสิทธิ์ลบรถคันนี้"}, status=403)
-
-    car_type_id = car.car_type.id  # ดึงประเภทของรถไว้ก่อนลบ
-    car.delete()
-
-    return JsonResponse({'success': True, 'redirect_url': f'/cars/type/{car_type_id}/'}) 
-
-
-@login_required
-def profile_view(request):
-    user = CustomUser.objects.filter(id=request.user.id)
-    return render(request, 'profile.html', {'user': request.user})
-
-@login_required
-def edit_profile_view(request):
-    # ตรวจสอบว่าเป็นการเข้าแก้ไขโปรไฟล์ของผู้ใช้ที่ล็อกอิน
-    if request.method == 'POST':
-        form = UserUpdateForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'โปรไฟล์ถูกอัปเดตเรียบร้อยแล้ว!')
-            return redirect('profile')
-    else:
-        form = UserUpdateForm(instance=request.user)  # โหลดข้อมูลของผู้ใช้ที่ล็อกอิน
-    return render(request, 'edit_profile.html', {'form': form})
-
-
-def car_detail_view(request, car_id):
-    # ดึงข้อมูลรถตาม car_id
-    car = get_object_or_404(Car, id=car_id)
-    
-    # ดึงข้อมูลเจ้าของรถ
-    owner = car.owner  # เจ้าของรถ (ผู้ใช้)
-    
-    # ส่งข้อมูลไปที่เทมเพลต
-    context = {
-        'car': car,
-        'owner': owner,  # ส่งข้อมูลเจ้าของรถไปที่เทมเพลต
-    }
-
-    return render(request, 'car_detail.html', context)
-
-# ฟังก์ชันสำหรับเปลี่ยนสถานะของรถ
-def toggle_car_status(request, car_id):
-    # ดึงข้อมูลรถจากฐานข้อมูลโดยใช้ car_id
-    car = get_object_or_404(Car, id=car_id)
-    
-    # ตรวจสอบว่าเจ้าของรถเป็นผู้ที่ล็อกอินอยู่หรือไม่
-    if car.owner == request.user:
-        # เปลี่ยนสถานะของรถ (พร้อมใช้งาน ↔ ไม่พร้อมใช้งาน)
-        car.is_available = not car.is_available
-        car.save()
-    
-    # หลังจากเปลี่ยนสถานะแล้ว ให้ย้อนกลับไปยังหน้ารายละเอียดของรถ
-    return redirect('car_detail', car_id=car.id)
-
-def my_cars(request):
-    # ดึงข้อมูลรถที่เจ้าของเป็นผู้ใช้ปัจจุบัน
-    cars = Car.objects.filter(owner=request.user)
-
-    # ส่งข้อมูลรถไปยัง template
-    return render(request, 'my_cars.html', {'cars': cars})
-
-# ฟังก์ชันสำหรับการยืนยันการจอง
-@login_required
-def confirm_reservation(request, reservation_id):
-    schedule = get_object_or_404(Schedule, id=reservation_id)
-
-    if request.method == 'POST':
-        action = request.POST.get('action')
-
-        if action == 'approve':
-            # อัพเดตสถานะให้เป็นยืนยัน
-            schedule.is_booked = True
-            schedule.save()
-
-            # แจ้งเตือนผู้จองว่าการจองได้รับการยืนยัน
-            Notification.objects.create(
-                user=schedule.booked_by,
-                message=f"เจ้าของรถ {schedule.car.name} ได้ยืนยันการจองของคุณ วันที่ {schedule.date} ช่วง {schedule.get_time_display()}",
-                schedule=schedule,
-                is_confirmed=True,
-                is_approved=True
-            )
-        
-        elif action == 'reject':
-            # ลบการจองหากถูกปฏิเสธ
-            schedule.delete()
-
-            # แจ้งเตือนผู้จองว่าการจองถูกปฏิเสธ
-            Notification.objects.create(
-                user=schedule.booked_by,
-                message=f"เจ้าของรถ {schedule.car.name} ปฏิเสธการจองของคุณ วันที่ {schedule.date} ช่วง {schedule.get_time_display()}",
-                is_confirmed=True,
-                is_approved=False
-            )
-
-        return redirect('notification_list')  # กลับไปที่แจ้งเตือน
-
-
-# ฟังก์ชันการสร้างการจอง
 @login_required
 def create_booking(request, car_id):
     car = get_object_or_404(Car, id=car_id)
-
     if request.method == 'POST':
         selected_date = request.POST.get('date')
-        selected_time = request.POST.get('time')
+        start_time = request.POST.get('start_time')
+        end_time = request.POST.get('end_time')
+        time_type = request.POST.get('time_type')
 
-        if selected_date and selected_time:
-            # ตรวจสอบว่าช่วงเวลานี้ถูกจองไปแล้วหรือไม่
-            existing_booking = Schedule.objects.filter(car=car, date=selected_date, time=selected_time).exists()
-            if existing_booking:
-                messages.error(request, "ช่วงเวลานี้ถูกจองแล้ว กรุณาเลือกช่วงเวลาอื่น")
-                return redirect('car_detail', car_id=car.id)
+        if not selected_date:
+            messages.error(request, "กรุณาเลือกวันที่")
+            return redirect('book_time', car_id=car.id)
+      
+        if not time_type and (not start_time or not end_time):
+            messages.error(request, "กรุณาเลือกช่วงเวลาให้ครบถ้วน")
+            return redirect('book_time', car_id=car.id)
 
-            # สร้างคำขอจองใหม่
+        if time_type == "morning":
+            start_time = "08:00"
+            end_time = "12:00"
+        elif time_type == "afternoon":
+            start_time = "13:00"
+            end_time = "17:00"
+        elif start_time and end_time:
+            time_type = "custom"
+        else:
+            messages.error(request, "กรุณาเลือกช่วงเวลาให้ครบถ้วน")
+            return redirect('book_time', car_id=car.id)
+
+        if Schedule.objects.filter(car=car, date=selected_date, start_time__lt=end_time, end_time__gt=start_time).exists():
+            messages.error(request, "ช่วงเวลานี้ถูกจองแล้ว กรุณาเลือกช่วงเวลาอื่น")
+            return redirect('book_time', car_id=car.id)
+
+        try:
             schedule = Schedule.objects.create(
                 car=car,
                 date=selected_date,
-                time=selected_time,
-                is_booked=False,  # ต้องให้เจ้าของรถกดยืนยันก่อน
+                start_time=start_time,
+                end_time=end_time,
+                time=time_type,  
+                is_booked=False,
                 booked_by=request.user
             )
 
             Notification.objects.create(
-                user=car.owner,  # เจ้าของรถ (ผู้รับการแจ้งเตือน)
-                borrower=request.user,  # ผู้ยืม
-                message=f"คุณมีการจองรถ {car.name} จาก {request.user.username} สำหรับวันที่ {selected_date} ช่วง {schedule.get_time_display()} โปรดตรวจสอบและอนุมัติ",
-                schedule=schedule
+                user=car.owner,
+                borrower=request.user,
+                message=f"🚗 คุณมีการจองรถ {car.name} จาก {request.user.username} วันที่ {selected_date} ช่วง {start_time} ถึง {end_time} รอการอนุมัติ",
+                schedule=schedule,
+                is_confirmed=False,
+                is_approved=False
+            )
+            
+            Notification.objects.create(
+                user=request.user,  
+                message=f"🕒 คุณได้ส่งคำขอจองรถ {car.name} วันที่ {selected_date} ช่วง {start_time} ถึง {end_time} รอการอนุมัติจากเจ้าของรถ",
+                schedule=schedule,
+                is_confirmed=False,
+                is_approved=False
             )
 
-            messages.success(request, "ส่งคำขอจองไปยังเจ้าของรถแล้ว และคุณจะได้รับการแจ้งเตือนเมื่อมีการตอบกลับ")
-            return redirect('notification_list')  # ไปยังหน้าการแจ้งเตือน
-        else:
-            messages.error(request, "กรุณาเลือกวันที่และช่วงเวลาให้ครบถ้วน")
+            messages.success(request, "📢 การจองของคุณถูกส่งแล้ว! รอเจ้าของรถอนุมัติ")
+            return redirect('notification_list')
 
-    return render(request, 'book_time.html', {'car': car})
+        except Exception as e:
+            messages.error(request, f"เกิดข้อผิดพลาดในการจอง: {str(e)}")
+            return redirect('car_detail', car_id=car.id)
+
+    return redirect('car_detail', car_id=car.id)
+
+
+
+def get_available_slots(car, selected_date):
+    booked_slots = Schedule.objects.filter(car=car, date=selected_date, is_booked=True).values_list("start_time", "end_time")
+    time_slots = [{"start": f"{hour}:00", "end": f"{hour+1}:00"} for hour in range(8, 18)]
+    
+    return [
+        {
+            "start": slot["start"], 
+            "end": slot["end"],
+            "booked": any(start == slot["start"] and end == slot["end"] for start, end in booked_slots)
+        }
+        for slot in time_slots
+    ]
+
+def book_time(request, car_id):
+    car = get_object_or_404(Car, id=car_id)
+    selected_date = request.GET.get('date', None)
+    available_slots = get_available_slots(car, selected_date)
+
+    return render(request, 'book_time.html', {
+        'car': car,
+        'available_slots': available_slots,
+        'selected_date': selected_date
+    })
 
 
 @login_required
-def notification_list(request):
-    # ดึงการแจ้งเตือนที่ผู้ใช้ได้รับ
-    notifications_as_user = Notification.objects.filter(user=request.user).order_by('-timestamp')
-
-    # ดึงการแจ้งเตือนที่ผู้ใช้เป็นผู้ยืม
-    notifications_as_borrower = Notification.objects.filter(borrower=request.user).order_by('-timestamp')
-
-    # รวมทั้งสองรายการ
-    notifications = Notification.objects.filter(
-        Q(user=request.user) |  # เจ้าของรถ
-        Q(borrower=request.user)  # ผู้ยืม
-    ).order_by('-timestamp')
-    
-    return render(request, 'notification_list.html', {
-        'notifications': notifications,
-        'is_owner': Car.objects.filter(owner=request.user).exists()  # เช็คว่าเป็นเจ้าของรถหรือไม่
-    })
+def user_reservations(request):
+    reservations = Schedule.objects.filter(booked_by=request.user)
+    return render(request, 'user_reservations.html', {'reservations': reservations})
 
 
 @login_required
 def cancel_reservation(request, reservation_id):
     reservation = get_object_or_404(Schedule, id=reservation_id, booked_by=request.user)
-
     if reservation.is_booked:
-        # ตั้งสถานะให้ว่าง
         reservation.is_booked = False
         reservation.booked_by = None
         reservation.save()
 
-        # แจ้งเตือนเจ้าของรถ
         Notification.objects.create(
             user=reservation.car.owner,
             message=f"🚨 การจองรถ {reservation.car.name} วันที่ {reservation.date} ของ {request.user.username} ถูกยกเลิกแล้ว",
             schedule=reservation,
-            is_confirmed=True,  # ถือว่าได้รับการยืนยันแล้ว
-            is_approved=False   # แสดงว่าการจองถูกยกเลิก
+            is_confirmed=True,
+            is_approved=False
         )
 
-        # แจ้งเตือนผู้จองว่าการจองของพวกเขาถูกยกเลิก
         Notification.objects.create(
             user=request.user,
             message=f"🚨 การจองรถ {reservation.car.name} วันที่ {reservation.date} ถูกยกเลิกแล้ว",
@@ -481,51 +366,96 @@ def cancel_reservation(request, reservation_id):
         messages.success(request, "ยกเลิกการจองสำเร็จ")
     else:
         messages.error(request, "ไม่สามารถยกเลิกการจองนี้ได้")
+    return redirect('user_reservations')
 
-    return redirect('user_reservations')  # กลับไปหน้ารายการจองของผู้ใช้
+
+@login_required
+def confirm_reservation(request, schedule_id):
+    schedule = get_object_or_404(Schedule, id=schedule_id)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        is_approved = action == 'approve'
+        
+        # อัปเดตสถานะการจอง
+        schedule.is_booked = is_approved
+        schedule.is_confirmed = True  # เปลี่ยนสถานะการยืนยัน
+        schedule.save()
+
+        # อัปเดตการแจ้งเตือนเดิมทั้งหมดที่เกี่ยวข้องกับตารางงานนี้
+        Notification.objects.filter(schedule=schedule).update(
+            is_confirmed=True, 
+            is_approved=is_approved
+        )
+
+        # สร้างการแจ้งเตือนใหม่เพื่อแจ้งผลลัพธ์
+        message = f"การจองรถ {schedule.car.name} วันที่ {schedule.date} ได้รับการ{'อนุมัติ' if is_approved else 'ปฏิเสธ'}"
+        Notification.objects.create(
+            user=schedule.booked_by, 
+            message=message, 
+            schedule=schedule, 
+            is_confirmed=True, 
+            is_approved=is_approved
+        )
+
+        # รีเฟรชหน้าแจ้งเตือนหลังจากการอัปเดต
+        return redirect('notification_list')
+
+    return HttpResponseForbidden()
 
 
+@login_required
+def notification_list(request):
+    notifications = Notification.objects.filter(user=request.user).order_by('-timestamp')
+    grouped_notifications = []
+    grouped = notifications.values('schedule__car__name', 'schedule__date').distinct()
+
+    for group in grouped:
+        car_name = group['schedule__car__name']
+        date = group['schedule__date']
+        
+        group_notifications = notifications.filter(
+            schedule__car__name=car_name,
+            schedule__date=date
+        )
+        
+        first_notification = group_notifications.first()
+        if first_notification and first_notification.schedule:
+            grouped_notifications.append({
+                'car': first_notification.schedule.car, 
+                'date': date,
+                'notifications': group_notifications
+            })
+
+    return render(request, 'notification_list.html', {'grouped_notifications': grouped_notifications})
+
+
+@login_required
 def car_review_view(request, car_id):
     car = get_object_or_404(Car, id=car_id)
-    reviews = CarReview.objects.filter(car=car)
+    reviews = CarReview.objects.filter(car=car).order_by('-created_at')
 
     if request.method == "POST":
         form = ReviewForm(request.POST)
         if form.is_valid():
+            if CarReview.objects.filter(car=car, user=request.user).exists():
+                messages.error(request, "คุณได้รีวิวรถคันนี้ไปแล้ว")
+                return redirect('car_review', car_id=car.id)
+
             review = form.save(commit=False)
             review.car = car
-            review.user = request.user  # กำหนดผู้ใช้ที่ส่งรีวิว
+            review.user = request.user
             review.save()
-            return redirect('car_review', car_id=car.id)  # รีไดเร็กไปหน้ารีวิวหลังจากบันทึกเสร็จ
 
+            messages.success(request, "เพิ่มรีวิวสำเร็จ!")
+
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'message': "เพิ่มรีวิวสำเร็จ!"})
+
+            return redirect('car_review', car_id=car.id)
     else:
         form = ReviewForm()
 
     return render(request, 'car_review.html', {'car': car, 'reviews': reviews, 'form': form})
 
-
-@staff_member_required  # ให้เฉพาะแอดมินเข้าถึงได้
-def user_management(request):
-    users = CustomUser.objects.all()  # ✅ เปลี่ยนจาก User.objects.all() เป็น CustomUser.objects.all()
-    return render(request, 'user_management.html', {'users': users})
-
-@staff_member_required
-def delete_user(request, user_id):
-    user = get_object_or_404(CustomUser, id=user_id)  # ✅ ใช้ CustomUser แทน User
-
-    if user.is_staff:
-        messages.error(request, "ไม่สามารถลบผู้ดูแลระบบได้")
-    else:
-        user.delete()
-        messages.success(request, "ลบผู้ใช้งานเรียบร้อยแล้ว")
-
-    return redirect('user_management')
-
-
-from .models import Schedule  # เปลี่ยนจาก Reservation เป็น Schedule
-
-@login_required
-def user_reservations(request):
-    reservations = Schedule.objects.filter(booked_by=request.user)
-    return render(request, 'user_reservations.html', {'reservations': reservations})
 

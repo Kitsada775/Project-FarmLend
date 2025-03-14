@@ -38,18 +38,24 @@ class Car(models.Model):
 
     price_per_rai = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="ราคาต่อไร่")
     time_per_rai = models.IntegerField(null=True, blank=True, verbose_name="เวลาทำงานต่อไร่ (นาที)")
+    contact_owner = models.BooleanField(default=False, verbose_name="ต้องการให้ติดต่อเจ้าของรถ")
 
     def __str__(self):
         return self.name
 
 
 class Schedule(models.Model):
+    TIME_CHOICES = [
+        ('morning', 'ช่วงเช้า'),
+        ('afternoon', 'ช่วงบ่าย'),
+        ('custom', 'กำหนดเอง')
+    ]
+
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='schedules')
     date = models.DateField()  # วันที่จอง
-    time = models.CharField(
-        max_length=20,
-        choices=[('morning', 'ช่วงเช้า'), ('afternoon', 'ช่วงบ่าย')]  # เลือกช่วงเวลา
-    )
+    start_time = models.TimeField(null=True, blank=True)  # เวลาเริ่มต้น
+    end_time = models.TimeField(null=True, blank=True)  # เวลาสิ้นสุด
+    time = models.CharField(max_length=20, choices=TIME_CHOICES, null=True, blank=True)  # เลือกช่วงเวลา
     is_booked = models.BooleanField(default=False)  # ตรวจสอบว่าถูกจองแล้วหรือยัง
     booked_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,  # เชื่อมกับผู้ใช้ที่ทำการจอง
@@ -59,24 +65,20 @@ class Schedule(models.Model):
     )
 
     def __str__(self):
-        return f"{self.car.name} - {self.date} ({self.get_time_display()})"
+        if self.time == 'morning':
+            return f"{self.car.name} - {self.date} (ช่วงเช้า 08:00 - 12:00)"
+        elif self.time == 'afternoon':
+            return f"{self.car.name} - {self.date} (ช่วงบ่าย 13:00 - 17:00)"
+        return f"{self.car.name} - {self.date} ({self.start_time} to {self.end_time})"
    
-
-class CarForm(forms.ModelForm):
-    class Meta:
-        model = Car
-        fields = ['name', 'description', 'horsepower', 'image']
-
-
 
 class CustomUser(AbstractUser):
     nickname = models.CharField(max_length=50, null=True, blank=True)
     age = models.PositiveIntegerField(null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     address = models.TextField(null=True, blank=True)
-    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
 
-    # Add related_name to resolve clashes
     groups = models.ManyToManyField(
         Group,
         related_name='customuser_groups',
@@ -108,21 +110,13 @@ class Notification(models.Model):
     def __str__(self):
         return f"Notification for {self.user.username} at {self.timestamp}"
 
-
 class CarReview(models.Model):
     car = models.ForeignKey('Car', on_delete=models.CASCADE, related_name='reviews')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # แก้ไขที่นี่
-    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])  # Rating 1-5
-    review_text = models.TextField()
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)], null=True, blank=True)  # ให้ rating เป็น optional
+    review_text = models.TextField(null=True, blank=True)  # ให้คอมเมนต์เป็น optional
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Review for {self.car.name} by {self.user.username}"
+        return f"Review for {self.car.name} by {self.user.username} ({'Rated' if self.rating else 'Comment'})"
 
-class Review(models.Model):
-    car = models.ForeignKey(Car, on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # แก้ไขที่นี่
-    comment = models.TextField()
-
-    def __str__(self):
-        return f'Review for {self.car.name} by {self.user.username}'

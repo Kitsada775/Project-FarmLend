@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+
+{% block title %}จองรถ{% endblock %}
+
+{% block content %}
+<div class="flex justify-center min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 p-4 md:p-6">
+    <div class="max-w-3xl w-full bg-white shadow-xl rounded-xl p-6 md:p-8 transition-all duration-300 transform hover:shadow-2xl">
+        
+        <h2 class="text-3xl font-extrabold text-gray-800 text-center mb-6">🚗 จองรถ {{ car.name }}</h2>
+
+        <!-- ข้อมูลรถ -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">📌 ข้อมูลรถ</h3>
+            <ul class="mt-2 text-gray-700">
+                <li><strong>ชื่อรถ:</strong> {{ car.name }}</li>
+                <li><strong>แรงม้า:</strong> {{ car.horsepower }} HP</li>
+                <li><strong>รายละเอียด:</strong> {{ car.description }}</li>
+            </ul>
+        </div>
+        
+        <form method="post" action="{% url 'create_booking' car.id %}" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- เลือกวันที่ -->
+            <div class="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
+                <label for="date" class="block text-gray-700 font-medium mb-2">📅 เลือกวันที่:</label>
+                <input type="date" id="date" name="date" required 
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+            </div>
+
+            <!-- เลือกช่วงเวลา -->
+            <div class="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
+                <label class="block text-gray-700 font-medium mb-2">🕒 เลือกช่วงเวลา:</label>
+                <select name="time_type" id="time_type" 
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                    <option value="">กำหนดเวลาเอง</option>
+                    <option value="morning">☀️ ช่วงเช้า (08:00 - 12:00)</option>
+                    <option value="afternoon">🌇 ช่วงบ่าย (13:00 - 17:00)</option>
+                </select>
+            </div>
+
+            <!-- ข้อมูลราคา - แสดงเมื่อเลือกช่วงเวลา -->
+            <div id="priceInfoSection" class="hidden bg-green-50 rounded-lg p-4 border-l-4 border-green-500">
+                <h3 class="text-lg font-semibold mb-3 text-gray-800">💰 ข้อมูลราคา</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <p class="text-sm text-gray-600">ช่วงเวลาที่เลือก:</p>
+                        <p id="selectedTimeInfo" class="font-medium text-gray-800"></p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <p class="text-sm text-gray-600">ราคาเช่า:</p>
+                            <p id="rentalPrice" class="font-medium text-gray-800"></p>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <p class="text-sm text-gray-600">ราคาต่อไร่:</p>
+                            <p id="pricePerRai" class="font-medium text-gray-800">{{ car.price_per_rai }} บาท</p>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <p class="text-sm text-gray-600">เวลาทำงานต่อไร่:</p>
+                            <p id="timePerRai" class="font-medium text-gray-800">{{ car.time_per_rai }} นาที</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- เลือกเวลาแบบตาราง -->
+            <div id="customTimeSection" class="bg-gray-50 rounded-lg p-4 border-l-4 border-gray-500">
+                <h3 class="text-lg font-semibold mb-3 text-gray-800">⏰ เลือกช่วงเวลา</h3>
+                
+                <p class="text-sm text-gray-600 mb-4">เลือกช่วงเวลาที่ต้องการจอง (เลือกต่อเนื่องกันได้):</p>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                    <label class="relative flex items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-all">
+                        <input type="checkbox" name="time_slot" class="time-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
+                            data-start="08:00" data-end="09:00">
+                        <span class="ml-3 text-gray-700 text-sm">08:00 - 09:00</span>
+                    </label>
+                    
+                    <label class="relative flex items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-all">
+                        <input type="checkbox" name="time_slot" class="time-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
+                            data-start="09:00" data-end="10:00">
+                        <span class="ml-3 text-gray-700 text-sm">09:00 - 10:00</span>
+                    </label>
+                    
+                    <label class="relative flex items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-all">
+                        <input type="checkbox" name="time_slot" class="time-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
+                            data-start="10:00" data-end="11:00">
+                        <span class="ml-3 text-gray-700 text-sm">10:00 - 11:00</span>
+                    </label>
+                    
+                    <label class="relative flex items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-all">
+                        <input type="checkbox" name="time_slot" class="time-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
+                            data-start="11:00" data-end="12:00">
+                        <span class="ml-3 text-gray-700 text-sm">11:00 - 12:00</span>
+                    </label>
+                    
+                    <label class="relative flex items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-all">
+                        <input type="checkbox" name="time_slot" class="time-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
+                            data-start="12:00" data-end="13:00">
+                        <span class="ml-3 text-gray-700 text-sm">12:00 - 13:00</span>
+                    </label>
+                    
+                    <label class="relative flex items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-all">
+                        <input type="checkbox" name="time_slot" class="time-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
+                            data-start="13:00" data-end="14:00">
+                        <span class="ml-3 text-gray-700 text-sm">13:00 - 14:00</span>
+                    </label>
+                    
+                    <label class="relative flex items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-all">
+                        <input type="checkbox" name="time_slot" class="time-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
+                            data-start="14:00" data-end="15:00">
+                        <span class="ml-3 text-gray-700 text-sm">14:00 - 15:00</span>
+                    </label>
+                    
+                    <label class="relative flex items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-all">
+                        <input type="checkbox" name="time_slot" class="time-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
+                            data-start="15:00" data-end="16:00">
+                        <span class="ml-3 text-gray-700 text-sm">15:00 - 16:00</span>
+                    </label>
+                    
+                    <label class="relative flex items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-all">
+                        <input type="checkbox" name="time_slot" class="time-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
+                            data-start="16:00" data-end="17:00">
+                        <span class="ml-3 text-gray-700 text-sm">16:00 - 17:00</span>
+                    </label>
+                    
+                    <label class="relative flex items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-all">
+                        <input type="checkbox" name="time_slot" class="time-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
+                            data-start="17:00" data-end="18:00">
+                        <span class="ml-3 text-gray-700 text-sm">17:00 - 18:00</span>
+                    </label>
+                </div>
+                
+                <!-- แสดงสรุปเวลาที่เลือก -->
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100 hidden" id="customTimeSummary">
+                    <div class="flex items-center">
+                        <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        <p class="ml-3 text-sm text-blue-800">
+                            คุณเลือกเวลา <span id="customTimeText" class="font-medium"></span>
+                            <span class="ml-2 text-xs">(ระยะเวลา <span id="durationText">0</span> ชั่วโมง)</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- คำเตือนเวลาไม่ถูกต้อง -->
+                <div class="mt-4 p-3 bg-red-50 rounded-lg border border-red-100 hidden" id="timeWarning">
+                    <div class="flex items-center">
+                        <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-red-100 text-red-600 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        <p class="ml-3 text-sm text-red-800" id="timeWarningText">
+                            กรุณาเลือกช่วงเวลาอย่างน้อย 1 ช่วง
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Hidden inputs -->
+                <input type="hidden" name="start_time" id="start_time">
+                <input type="hidden" name="end_time" id="end_time">
+            </div>
+
+            <!-- ปุ่มยืนยัน -->
+            <button type="submit" id="submitBtn"
+                class="w-full px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                disabled>
+                ✅ ยืนยันการจอง
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const timeTypeSelect = document.getElementById("time_type");
+    const customTimeSection = document.getElementById("customTimeSection");
+    const priceInfoSection = document.getElementById("priceInfoSection");
+    const timeCheckboxes = document.querySelectorAll(".time-checkbox");
+    const startTimeInput = document.getElementById("start_time");
+    const endTimeInput = document.getElementById("end_time");
+    const customTimeSummary = document.getElementById("customTimeSummary");
+    const customTimeText = document.getElementById("customTimeText");
+    const durationText = document.getElementById("durationText");
+    const timeWarning = document.getElementById("timeWarning");
+    const timeWarningText = document.getElementById("timeWarningText");
+    const selectedTimeInfo = document.getElementById("selectedTimeInfo");
+    const rentalPrice = document.getElementById("rentalPrice");
+    const pricePerRai = document.getElementById("pricePerRai");
+    const timePerRai = document.getElementById("timePerRai");
+    const submitBtn = document.getElementById("submitBtn");
+
+    // ดึงค่าจาก Django ที่เติมไว้ใน HTML
+    const morningPrice = "{{ car.morning_price }}";
+    const afternoonPrice = "{{ car.afternoon_price|default:car.morning_price }}";
+    const pricePerRaiValue = parseInt("{{ car.price_per_rai }}");
+    const timePerRaiValue = parseInt("{{ car.time_per_rai }}");
+    const contactOwner = {% if car.contact_owner %}true{% else %}false{% endif %};
+
+    // ราคาและข้อมูลที่ต้องแสดง
+    const priceData = {
+        morning: {
+            rental: contactOwner ? "ติดต่อเจ้าของรถ" : parseInt(morningPrice),
+            perRai: pricePerRaiValue,
+            timePerRai: timePerRaiValue
+        },
+        afternoon: {
+            rental: contactOwner ? "ติดต่อเจ้าของรถ" : parseInt(afternoonPrice),
+            perRai: pricePerRaiValue,
+            timePerRai: timePerRaiValue
+        },
+        custom: {
+            rentalPerHour: contactOwner ? null : Math.ceil(parseInt(morningPrice) / 4),
+            perRai: pricePerRaiValue,
+            timePerRai: timePerRaiValue
+        }
+    };
+
+    // เมื่อเลือกประเภทเวลา
+    timeTypeSelect.addEventListener("change", function() {
+        if (this.value === "") {
+            // กำหนดเวลาเอง
+            customTimeSection.classList.remove("hidden");
+            priceInfoSection.classList.add("hidden");
+            clearAllCheckboxes();
+            validateTimeSelection();
+        } else {
+            // เลือกช่วงเวลาแบบสำเร็จรูป
+            customTimeSection.classList.add("hidden");
+            
+            if (this.value === "morning") {
+                startTimeInput.value = "08:00";
+                endTimeInput.value = "12:00";
+                updatePriceInfo("morning", "08:00 - 12:00");
+            } else if (this.value === "afternoon") {
+                startTimeInput.value = "13:00";
+                endTimeInput.value = "17:00";
+                updatePriceInfo("afternoon", "13:00 - 17:00");
+            }
+            
+            priceInfoSection.classList.remove("hidden");
+            submitBtn.disabled = false;
+        }
+    });
+
+    function clearAllCheckboxes() {
+        timeCheckboxes.forEach(cb => cb.checked = false);
+    }
+
+    // ตรวจสอบการเลือกช่วงเวลา
+    timeCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", function() {
+            validateTimeSelection();
+        });
+    });
+
+    function validateTimeSelection() {
+        // เก็บช่วงเวลาที่เลือก
+        let selectedTimes = Array.from(timeCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => ({
+                start: cb.getAttribute("data-start"),
+                end: cb.getAttribute("data-end")
+            }))
+            .sort((a, b) => a.start.localeCompare(b.start));
+        
+        if (selectedTimes.length === 0) {
+            timeWarningText.textContent = "กรุณาเลือกช่วงเวลาอย่างน้อย 1 ช่วง";
+            timeWarning.classList.remove("hidden");
+            customTimeSummary.classList.add("hidden");
+            submitBtn.disabled = true;
+            return;
+        }
+        
+        // ตรวจสอบว่าเลือกช่วงเวลาต่อเนื่องกันหรือไม่
+        let isConsecutive = true;
+        let gaps = [];
+        
+        for (let i = 0; i < selectedTimes.length - 1; i++) {
+            if (selectedTimes[i].end !== selectedTimes[i + 1].start) {
+                isConsecutive = false;
+                gaps.push(`${selectedTimes[i].end} - ${selectedTimes[i + 1].start}`);
+            }
+        }
+        
+        if (!isConsecutive) {
+            timeWarningText.textContent = "กรุณาเลือกเวลาให้ต่อเนื่องกัน";
+            timeWarning.classList.remove("hidden");
+            customTimeSummary.classList.add("hidden");
+            submitBtn.disabled = true;
+            return;
+        }
+        
+        // กำหนดเวลาเริ่มต้นและสิ้นสุด
+        startTimeInput.value = selectedTimes[0].start;
+        endTimeInput.value = selectedTimes[selectedTimes.length - 1].end;
+        
+        // คำนวณจำนวนชั่วโมง
+        const hours = selectedTimes.length;
+        
+        // แสดงข้อมูลเวลาที่เลือก
+        timeWarning.classList.add("hidden");
+        customTimeText.textContent = `${startTimeInput.value} - ${endTimeInput.value}`;
+        durationText.textContent = hours;
+        customTimeSummary.classList.remove("hidden");
+        
+        // อัปเดตราคา
+        updatePriceInfo("custom", `${startTimeInput.value} - ${endTimeInput.value}`, hours);
+        
+        submitBtn.disabled = false;
+    }
+    
+    function updatePriceInfo(timeType, timeRangeText, hours = 4) {
+    selectedTimeInfo.textContent = timeRangeText;
+    
+    if (timeType === "custom") {
+        // แสดงราคาตามราคาต่อไร่เท่านั้น ไม่คำนวณราคาเพิ่ม
+        rentalPrice.textContent = `${priceData.custom.perRai} บาท`;
+        pricePerRai.textContent = `${priceData.custom.perRai} บาท`;  // แสดงราคาไร่
+        timePerRai.textContent = `${priceData.custom.timePerRai} นาที`;
+    } else {
+        if (contactOwner) {
+            rentalPrice.textContent = "ติดต่อเจ้าของรถ";
+        } else {
+            rentalPrice.textContent = `${priceData[timeType].rental} บาท`;  // แสดงราคาตามประเภทเวลา
+        }
+        pricePerRai.textContent = `${priceData[timeType].perRai} บาท`;  // แสดงราคาไร่
+        timePerRai.textContent = `${priceData[timeType].timePerRai} นาที`;
+    }
+    
+    priceInfoSection.classList.remove("hidden");
+}
+
+
+    // ตรวจสอบค่าเริ่มต้น
+    if (timeTypeSelect.value === "") {
+        customTimeSection.classList.remove("hidden");
+    } else {
+        customTimeSection.classList.add("hidden");
+        
+        if (timeTypeSelect.value === "morning") {
+            updatePriceInfo("morning", "08:00 - 12:00");
+            priceInfoSection.classList.remove("hidden");
+            submitBtn.disabled = false;
+        } else if (timeTypeSelect.value === "afternoon") {
+            updatePriceInfo("afternoon", "13:00 - 17:00");
+            priceInfoSection.classList.remove("hidden");
+            submitBtn.disabled = false;
+        }
+    }
+});
+</script>
+
+{% endblock %}
