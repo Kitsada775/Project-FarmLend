@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>เข้าสู่ระบบหรือสมัครสมาชิก</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-image: url("{% static 'images/background_farm.png' %}");
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center top;
+            background-color: #f0f0f0;
+            background-attachment: fixed;
+            font-family: 'Prompt', sans-serif;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen relative overflow-hidden">
+    <!-- ปุ่มบนพื้นหลัง -->
+    <div class="absolute bottom-20 flex flex-col items-center gap-10 bg-white/80 px-16 py-12 rounded-[60px] shadow-xl">
+        <a href="{% url 'login' %}?next={{ request.GET.next }}" 
+           class="bg-lime-200 hover:bg-lime-300 text-black text-3xl font-semibold px-14 py-5 rounded-full shadow-md transition">
+            Log in
+        </a>
+        <a href="{% url 'register' %}" 
+           class="bg-lime-200 hover:bg-lime-300 text-black text-3xl font-semibold px-14 py-5 rounded-full shadow-md transition">
+            Register
+        </a>
+    </div>
+</body>
+</html>
